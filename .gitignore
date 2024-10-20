@@ -1,0 +1,3 @@
+
+# Exclude CMake build directory
+build/
