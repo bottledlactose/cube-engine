@@ -9,8 +9,15 @@
 #define SDL_GPU_SHADERCROSS_IMPLEMENTATION
 #include <SDL_gpu_shadercross.h>
 
+struct PositionColorVertex {
+    float x, y, z;
+    Uint8 r, g, b, a; // TODO: Ensure this is the correct format
+};
+
 static SDL_GPUDevice *device = nullptr;
 static SDL_Window *window = nullptr;
+static SDL_GPUGraphicsPipeline *pipeline = nullptr;
+static SDL_GPUBuffer *vertex_buffer = nullptr;
 
 static SDL_GPUShader *LoadShader(
     SDL_GPUDevice *device,
@@ -95,9 +102,111 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
 
     // TODO: Set up pipeline
+    SDL_GPUColorTargetDescription color_target_description;
+    SDL_zero(color_target_description);
+    color_target_description.format = SDL_GetGPUSwapchainTextureFormat(device, window);
+
+    SDL_GPUVertexBufferDescription vertex_buffer_description;
+    SDL_zero(vertex_buffer_description);
+    vertex_buffer_description.slot = 0;
+    vertex_buffer_description.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
+    vertex_buffer_description.instance_step_rate = 0;
+    vertex_buffer_description.pitch = sizeof(PositionColorVertex);
+
+    SDL_GPUVertexAttribute vertex_attributes[2];
+    SDL_zero(vertex_attributes[0]);
+    vertex_attributes[0].buffer_slot = 0;
+    vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
+    vertex_attributes[0].location = 0;
+    vertex_attributes[0].offset = 0;
+
+    SDL_zero(vertex_attributes[1]);
+    vertex_attributes[1].buffer_slot = 0;
+    vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM;
+    vertex_attributes[1].location = 1;
+    vertex_attributes[1].offset = sizeof(float) * 3;
+
+    SDL_GPUVertexInputState vertex_input_state;
+    SDL_zero(vertex_input_state);
+    vertex_input_state.num_vertex_buffers = 1;
+    vertex_input_state.vertex_buffer_descriptions = &vertex_buffer_description;
+    vertex_input_state.num_vertex_attributes = 2;
+    vertex_input_state.vertex_attributes = vertex_attributes;
+
+    SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info;
+    SDL_zero(pipeline_create_info);
+
+    pipeline_create_info.target_info.num_color_targets = 1;
+    pipeline_create_info.target_info.color_target_descriptions = &color_target_description;
+    pipeline_create_info.vertex_input_state = vertex_input_state;
+    
+    pipeline_create_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+
+    pipeline_create_info.vertex_shader = vertex_shader;
+    pipeline_create_info.fragment_shader = fragment_shader;
+
+    pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_create_info);
+    if (pipeline == nullptr) {
+        fprintf(stderr, "Unable to create graphics pipeline: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
 
     SDL_ReleaseGPUShader(device, vertex_shader);
     SDL_ReleaseGPUShader(device, fragment_shader);
+
+    SDL_GPUBufferCreateInfo buffer_create_info;
+    SDL_zero(buffer_create_info);
+    buffer_create_info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+    buffer_create_info.size = sizeof(PositionColorVertex) * 3;
+
+    vertex_buffer = SDL_CreateGPUBuffer(device, &buffer_create_info);
+    if (vertex_buffer == nullptr) {
+        fprintf(stderr, "Unable to create vertex buffer: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    SDL_GPUTransferBufferCreateInfo transfer_buffer_create_info;
+    SDL_zero(transfer_buffer_create_info);
+    transfer_buffer_create_info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    transfer_buffer_create_info.size = sizeof(PositionColorVertex) * 3;
+
+    SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_buffer_create_info);
+    if (transfer_buffer == nullptr) {
+        fprintf(stderr, "Unable to create transfer buffer: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    PositionColorVertex *transfer_data = (PositionColorVertex *)SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
+    if (transfer_data == nullptr) {
+        fprintf(stderr, "Unable to map transfer buffer: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    transfer_data[0] = {0.0f, 0.5f, 0.0f, 255, 0, 0, 255};
+    transfer_data[1] = {0.5f, -0.5f, 0.0f, 0, 255, 0, 255};
+    transfer_data[2] = {-0.5f, -0.5f, 0.0f, 0, 0, 255, 255};
+
+    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
+
+    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(device);
+    SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+
+    SDL_GPUTransferBufferLocation transfer_buffer_location;
+    SDL_zero(transfer_buffer_location);
+    transfer_buffer_location.transfer_buffer = transfer_buffer;
+    transfer_buffer_location.offset = 0;
+
+    SDL_GPUBufferRegion buffer_region;
+    SDL_zero(buffer_region);
+    buffer_region.buffer = vertex_buffer;
+    buffer_region.offset = 0;
+    buffer_region.size = sizeof(PositionColorVertex) * 3;
+
+    SDL_UploadToGPUBuffer(copy_pass, &transfer_buffer_location, &buffer_region, false);
+
+    SDL_EndGPUCopyPass(copy_pass);
+    SDL_SubmitGPUCommandBuffer(command_buffer);
+    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
 
     return SDL_APP_CONTINUE;
 }
@@ -126,6 +235,16 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         color_target_info.store_op = SDL_GPU_STOREOP_STORE;
 
         render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, nullptr);
+
+        SDL_GPUBufferBinding vertex_buffer_binding;
+        SDL_zero(vertex_buffer_binding);
+        vertex_buffer_binding.buffer = vertex_buffer;
+        vertex_buffer_binding.offset = 0;
+
+        SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
+        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
+        SDL_DrawGPUPrimitives(render_pass, 3, 1, 0, 0);
+
         SDL_EndGPURenderPass(render_pass);
     }
 
@@ -143,6 +262,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+    SDL_ReleaseGPUBuffer(device, vertex_buffer);
+    SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
     SDL_ReleaseWindowFromGPUDevice(device, window);
     SDL_DestroyGPUDevice(device);
     SDL_DestroyWindow(window);
