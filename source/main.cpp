@@ -11,6 +11,7 @@
 
 struct PositionColorVertex {
     float x, y, z;
+    float nx, ny, nz;
     Uint8 r, g, b, a; // TODO: Ensure this is the correct format
 };
 
@@ -113,7 +114,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     vertex_buffer_description.instance_step_rate = 0;
     vertex_buffer_description.pitch = sizeof(PositionColorVertex);
 
-    SDL_GPUVertexAttribute vertex_attributes[2];
+    SDL_GPUVertexAttribute vertex_attributes[3];
     SDL_zero(vertex_attributes[0]);
     vertex_attributes[0].buffer_slot = 0;
     vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
@@ -122,15 +123,21 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     SDL_zero(vertex_attributes[1]);
     vertex_attributes[1].buffer_slot = 0;
-    vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM;
+    vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
     vertex_attributes[1].location = 1;
     vertex_attributes[1].offset = sizeof(float) * 3;
+
+    SDL_zero(vertex_attributes[2]);
+    vertex_attributes[2].buffer_slot = 0;
+    vertex_attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM;
+    vertex_attributes[2].location = 2;
+    vertex_attributes[2].offset = sizeof(float) * 6;
 
     SDL_GPUVertexInputState vertex_input_state;
     SDL_zero(vertex_input_state);
     vertex_input_state.num_vertex_buffers = 1;
     vertex_input_state.vertex_buffer_descriptions = &vertex_buffer_description;
-    vertex_input_state.num_vertex_attributes = 2;
+    vertex_input_state.num_vertex_attributes = 3;
     vertex_input_state.vertex_attributes = vertex_attributes;
 
     SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info;
@@ -182,9 +189,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
-    transfer_data[0] = {0.0f, 0.5f, 0.0f, 255, 0, 0, 255};
-    transfer_data[1] = {0.5f, -0.5f, 0.0f, 0, 255, 0, 255};
-    transfer_data[2] = {-0.5f, -0.5f, 0.0f, 0, 0, 255, 255};
+    transfer_data[0] = {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255};
+    transfer_data[1] = {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0, 255, 0, 255};
+    transfer_data[2] = {-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0, 0, 255, 255};
 
     SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
 
