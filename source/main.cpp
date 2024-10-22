@@ -164,7 +164,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_GPUBufferCreateInfo buffer_create_info;
     SDL_zero(buffer_create_info);
     buffer_create_info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
-    buffer_create_info.size = sizeof(PositionColorVertex) * 3;
+    buffer_create_info.size = sizeof(PositionColorVertex) * 36;
 
     vertex_buffer = SDL_CreateGPUBuffer(device, &buffer_create_info);
     if (vertex_buffer == nullptr) {
@@ -175,7 +175,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_GPUTransferBufferCreateInfo transfer_buffer_create_info;
     SDL_zero(transfer_buffer_create_info);
     transfer_buffer_create_info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-    transfer_buffer_create_info.size = sizeof(PositionColorVertex) * 3;
+    transfer_buffer_create_info.size = sizeof(PositionColorVertex) * 36;
 
     SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_buffer_create_info);
     if (transfer_buffer == nullptr) {
@@ -189,9 +189,53 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
-    transfer_data[0] = {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255};
-    transfer_data[1] = {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0, 255, 0, 255};
-    transfer_data[2] = {-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0, 0, 255, 255};
+    transfer_data[0] = {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255};
+    transfer_data[1] = {0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0, 0, 255, 255};
+    transfer_data[2] = {-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0, 255, 0, 255};
+
+    transfer_data[3] = {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255};
+    transfer_data[4] = {0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 255, 255, 0, 255};
+    transfer_data[5] = {0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0, 0, 255, 255};
+
+    transfer_data[6] = {-0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 255, 255, 255, 255};
+    transfer_data[7] = {-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0, 255, 0, 255};
+    transfer_data[8] = {-0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0, 255, 255, 255};
+
+    transfer_data[9] = {-0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 255, 255, 255, 255};
+    transfer_data[10] = {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255};
+    transfer_data[11] = {-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0, 255, 0, 255};
+
+    transfer_data[12] = {-0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 255, 255, 255, 255};
+    transfer_data[13] = {0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 255, 255, 0, 255};
+    transfer_data[14] = {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255};
+
+    transfer_data[15] = {-0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 255, 255, 255, 255};
+    transfer_data[16] = {0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0, 0, 0, 255};
+    transfer_data[17] = {0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 255, 255, 0, 255};
+
+    transfer_data[18] = {0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 255, 255, 0, 255};
+    transfer_data[19] = {0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 255, 0, 255, 255};
+    transfer_data[20] = {0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0, 0, 255, 255};
+
+    transfer_data[21] = {0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 255, 255, 0, 255};
+    transfer_data[22] = {0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0, 0, 0, 255};
+    transfer_data[23] = {0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 255, 0, 255, 255};
+
+    transfer_data[24] = {0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0, 0, 0, 255};
+    transfer_data[25] = {-0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0, 255, 255, 255};
+    transfer_data[26] = {0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 255, 0, 255, 255};
+
+    transfer_data[27] = {0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0, 0, 0, 255};
+    transfer_data[28] = {-0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 255, 255, 255, 255};
+    transfer_data[29] = {-0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0, 255, 255, 255};
+
+    transfer_data[30] = {-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0, 255, 0, 255};
+    transfer_data[31] = {0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 255, 0, 255, 255};
+    transfer_data[32] = {-0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0, 255, 255, 255};
+
+    transfer_data[33] = {-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0, 255, 0, 255};
+    transfer_data[34] = {0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0, 0, 255, 255};
+    transfer_data[35] = {0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 255, 0, 255, 255};
 
     SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
 
@@ -207,7 +251,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_zero(buffer_region);
     buffer_region.buffer = vertex_buffer;
     buffer_region.offset = 0;
-    buffer_region.size = sizeof(PositionColorVertex) * 3;
+    buffer_region.size = sizeof(PositionColorVertex) * 36;
 
     SDL_UploadToGPUBuffer(copy_pass, &transfer_buffer_location, &buffer_region, false);
 
@@ -250,7 +294,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
         SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
-        SDL_DrawGPUPrimitives(render_pass, 3, 1, 0, 0);
+        SDL_DrawGPUPrimitives(render_pass, 36, 1, 0, 0);
 
         SDL_EndGPURenderPass(render_pass);
     }
