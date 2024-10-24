@@ -9,6 +9,9 @@
 #define SDL_GPU_SHADERCROSS_IMPLEMENTATION
 #include <SDL_gpu_shadercross.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 struct PositionColorVertex {
     float x, y, z;
     float nx, ny, nz;
@@ -19,6 +22,10 @@ static SDL_GPUDevice *device = nullptr;
 static SDL_Window *window = nullptr;
 static SDL_GPUGraphicsPipeline *pipeline = nullptr;
 static SDL_GPUBuffer *vertex_buffer = nullptr;
+
+static glm::mat4 projection_matrix = glm::mat4(1.0f);
+static glm::mat4 view_matrix = glm::mat4(1.0f);
+static glm::mat4 model_matrix = glm::mat4(1.0f);
 
 static SDL_GPUShader *LoadShader(
     SDL_GPUDevice *device,
@@ -62,6 +69,10 @@ static SDL_GPUShader *LoadShader(
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
+    // testing only
+    projection_matrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         fprintf(stderr, "Unable to initialize SDL: %s", SDL_GetError());
         return SDL_APP_FAILURE;
@@ -89,7 +100,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     std::string vertex_shader_path = base_path;
     vertex_shader_path += "shaders/basic_triangle.vert.spv";
 
-    SDL_GPUShader *vertex_shader = LoadShader(device, SDL_GPU_SHADERSTAGE_VERTEX, vertex_shader_path.c_str(), 0, 0, 0, 0);
+    SDL_GPUShader *vertex_shader = LoadShader(device, SDL_GPU_SHADERSTAGE_VERTEX, vertex_shader_path.c_str(), 0, 1, 0, 0);
     if (vertex_shader == nullptr) {
         return SDL_APP_FAILURE;
     }
@@ -293,6 +304,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         vertex_buffer_binding.offset = 0;
 
         SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
+
+        // Rotate the model matrix
+        model_matrix = glm::rotate(model_matrix, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
+        glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+
+        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
         SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
         SDL_DrawGPUPrimitives(render_pass, 36, 1, 0, 0);
 

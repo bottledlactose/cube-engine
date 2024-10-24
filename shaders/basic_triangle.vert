@@ -6,7 +6,11 @@ layout (location = 2) in vec4 Color;
 
 layout (location = 0) out vec4 outColor;
 
+layout (binding = 0, set = 1) uniform UBO {
+    mat4 mvp;
+};
+
 void main() {
     outColor = Color;
-    gl_Position = vec4(Position, 1);
+    gl_Position = mvp * vec4(Position, 1);
 }

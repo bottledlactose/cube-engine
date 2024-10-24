@@ -12,4 +12,7 @@ add_subdirectory(thirdparty/sdl)
 add_executable(boomblox source/main.cpp)
 
 target_link_libraries(boomblox PRIVATE SDL3-static)
-target_include_directories(boomblox PRIVATE thirdparty/sdl/include thirdparty/shadercross)
+target_include_directories(boomblox PRIVATE
+    thirdparty/sdl/include
+    thirdparty/shadercross
+    thirdparty/glm)
