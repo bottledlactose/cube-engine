@@ -23,6 +23,8 @@ static SDL_Window *window = nullptr;
 static SDL_GPUGraphicsPipeline *pipeline = nullptr;
 static SDL_GPUBuffer *vertex_buffer = nullptr;
 
+static SDL_GPUTexture *depth_texture = nullptr;
+
 static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
 static glm::mat4 model_matrix = glm::mat4(1.0f);
@@ -113,6 +115,25 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
+    SDL_GPUTextureCreateInfo depth_texture_create_info;
+    SDL_zero(depth_texture_create_info);
+
+    depth_texture_create_info.type = SDL_GPU_TEXTURETYPE_2D;
+    depth_texture_create_info.format = SDL_GPU_TEXTUREFORMAT_D16_UNORM;
+    depth_texture_create_info.width = 800;
+    depth_texture_create_info.height = 600;
+    depth_texture_create_info.layer_count_or_depth = 1;
+    depth_texture_create_info.num_levels = 1;
+    depth_texture_create_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
+    depth_texture_create_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+    depth_texture_create_info.props = 0;
+
+    depth_texture = SDL_CreateGPUTexture(device, &depth_texture_create_info);
+    if (depth_texture == nullptr) {
+        fprintf(stderr, "Unable to create depth texture: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
     // TODO: Set up pipeline
     SDL_GPUColorTargetDescription color_target_description;
     SDL_zero(color_target_description);
@@ -156,6 +177,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     pipeline_create_info.target_info.num_color_targets = 1;
     pipeline_create_info.target_info.color_target_descriptions = &color_target_description;
+    pipeline_create_info.target_info.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM;
+    pipeline_create_info.target_info.has_depth_stencil_target = true;
+
+    pipeline_create_info.depth_stencil_state.enable_depth_test = true;
+    pipeline_create_info.depth_stencil_state.enable_depth_write = true;
+    pipeline_create_info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_LESS;
+
     pipeline_create_info.vertex_input_state = vertex_input_state;
     
     pipeline_create_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
@@ -296,7 +324,18 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
         color_target_info.store_op = SDL_GPU_STOREOP_STORE;
 
-        render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, nullptr);
+        SDL_GPUDepthStencilTargetInfo depth_stencil_target_info;
+        SDL_zero(depth_stencil_target_info);
+        depth_stencil_target_info.clear_depth = 1.0f;
+        depth_stencil_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
+        depth_stencil_target_info.store_op = SDL_GPU_STOREOP_DONT_CARE;
+        depth_stencil_target_info.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+        depth_stencil_target_info.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
+        depth_stencil_target_info.texture = depth_texture;
+        depth_stencil_target_info.cycle = true;
+
+        render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
+        //render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, nullptr);
 
         SDL_GPUBufferBinding vertex_buffer_binding;
         SDL_zero(vertex_buffer_binding);
@@ -330,6 +369,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+    SDL_ReleaseGPUTexture(device, depth_texture);
     SDL_ReleaseGPUBuffer(device, vertex_buffer);
     SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
     SDL_ReleaseWindowFromGPUDevice(device, window);
