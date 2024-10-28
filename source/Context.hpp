@@ -3,9 +3,7 @@
 #include "singleton.hpp"
 #include <string>
 
-// Forward declarations
-struct SDL_GPUDevice;
-struct SDL_Window;
+#include <SDL3/SDL.h>
 
 class Context {
     MAKE_SINGLETON(Context)
@@ -18,6 +16,15 @@ private:
 
 public:
     bool Initialize();
+
+    SDL_GPUShader *LoadShader(
+        SDL_GPUShaderStage stage,
+        const std::string &path,
+        Uint32 sampler_count,
+        Uint32 uniform_buffer_count,
+        Uint32 storage_buffer_count,
+        Uint32 storage_texture_count
+    );
 
     inline SDL_GPUDevice *GetDevice() const {
         return device;

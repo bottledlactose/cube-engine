@@ -86,18 +86,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     std::string base_path = Context::Get().GetBasePath();
 
-    std::string vertex_shader_path = base_path;
-    vertex_shader_path += "shaders/basic_triangle.vert.spv";
-
-    SDL_GPUShader *vertex_shader = LoadShader(device, SDL_GPU_SHADERSTAGE_VERTEX, vertex_shader_path.c_str(), 0, 1, 0, 0);
+    SDL_GPUShader *vertex_shader = Context::Get().LoadShader(SDL_GPU_SHADERSTAGE_VERTEX, "shaders/basic_triangle.vert.spv", 0, 1, 0, 0);
     if (vertex_shader == nullptr) {
         return SDL_APP_FAILURE;
     }
 
-    std::string fragment_shader_path = base_path;
-    fragment_shader_path += "shaders/basic_triangle.frag.spv";
-
-    SDL_GPUShader *fragment_shader = LoadShader(device, SDL_GPU_SHADERSTAGE_FRAGMENT, fragment_shader_path.c_str(), 0, 0, 0, 0);
+    SDL_GPUShader *fragment_shader = Context::Get().LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "shaders/basic_triangle.frag.spv", 0, 0, 0, 0);
     if (fragment_shader == nullptr) {
         return SDL_APP_FAILURE;
     }
