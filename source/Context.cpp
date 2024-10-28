@@ -69,3 +69,24 @@ SDL_GPUShader *Context::LoadShader(
     SDL_free(code);
     return shader;
 }
+
+SDL_GPUTexture *Context::CreateDepthStencil(Uint32 width, Uint32 height) {
+    SDL_GPUTextureCreateInfo create_info = {
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+        .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+        .width = width,
+        .height = height,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+        .sample_count = SDL_GPU_SAMPLECOUNT_1,
+    };
+
+    SDL_GPUTexture *texture = SDL_CreateGPUTexture(device, &create_info);
+    if (texture == nullptr) {
+        fprintf(stderr, "Unable to create depth texture: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    return texture;
+}

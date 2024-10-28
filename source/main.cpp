@@ -31,46 +31,6 @@ static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
 static glm::mat4 model_matrix = glm::mat4(1.0f);
 
-static SDL_GPUShader *LoadShader(
-    SDL_GPUDevice *device,
-    SDL_GPUShaderStage stage,
-    const std::string &path,
-    Uint32 sampler_count,
-    Uint32 uniform_buffer_count,
-    Uint32 storage_buffer_count,
-    Uint32 storage_texture_count
-) {
-
-    size_t code_size;
-    void *code = SDL_LoadFile(path.c_str(), &code_size);
-    if (code == nullptr) {
-        fprintf(stderr, "Unable to load shader file: %s", SDL_GetError());
-        return nullptr;
-    }
-
-    SDL_GPUShaderCreateInfo create_info;
-    SDL_zero(create_info);
-    create_info.code = (const Uint8 *)code;
-    create_info.code_size = code_size;
-    create_info.entrypoint = "main";
-    create_info.format = SDL_GPU_SHADERFORMAT_SPIRV;
-    create_info.stage = stage;
-    create_info.num_samplers = sampler_count;
-    create_info.num_uniform_buffers = uniform_buffer_count;
-    create_info.num_storage_buffers = storage_buffer_count;
-    create_info.num_storage_textures = storage_texture_count;
-
-    SDL_GPUShader *shader = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(device, &create_info);
-    if (shader == nullptr) {
-        fprintf(stderr, "Unable to create shader: %s", SDL_GetError());
-        SDL_free(code);
-        return nullptr;
-    }
-
-    SDL_free(code);
-    return shader;
-}
-
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     if (!Context::Get().Initialize()) {
@@ -78,13 +38,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
 
     // testing only
+    // TODO: Handle window resizing
     projection_matrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     device = Context::Get().GetDevice();
     window = Context::Get().GetWindow();
-
-    std::string base_path = Context::Get().GetBasePath();
 
     SDL_GPUShader *vertex_shader = Context::Get().LoadShader(SDL_GPU_SHADERSTAGE_VERTEX, "shaders/basic_triangle.vert.spv", 0, 1, 0, 0);
     if (vertex_shader == nullptr) {
@@ -96,26 +55,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
-    SDL_GPUTextureCreateInfo depth_texture_create_info;
-    SDL_zero(depth_texture_create_info);
-
-    depth_texture_create_info.type = SDL_GPU_TEXTURETYPE_2D;
-    depth_texture_create_info.format = SDL_GPU_TEXTUREFORMAT_D16_UNORM;
-    depth_texture_create_info.width = 800;
-    depth_texture_create_info.height = 600;
-    depth_texture_create_info.layer_count_or_depth = 1;
-    depth_texture_create_info.num_levels = 1;
-    depth_texture_create_info.sample_count = SDL_GPU_SAMPLECOUNT_1;
-    depth_texture_create_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
-    depth_texture_create_info.props = 0;
-
-    depth_texture = SDL_CreateGPUTexture(device, &depth_texture_create_info);
+    // TODO: Handle window resizing
+    depth_texture = Context::Get().CreateDepthStencil(800, 600);
     if (depth_texture == nullptr) {
-        fprintf(stderr, "Unable to create depth texture: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-    // TODO: Set up pipeline
+    // TODO: Fix incomprehensible line-by-line kind of thing
     SDL_GPUColorTargetDescription color_target_description;
     SDL_zero(color_target_description);
     color_target_description.format = SDL_GetGPUSwapchainTextureFormat(device, window);
