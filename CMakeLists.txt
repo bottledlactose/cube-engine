@@ -9,7 +9,7 @@ set(SDL_STATIC ON CACHE BOOL "")
 
 add_subdirectory(thirdparty/sdl)
 
-add_executable(boomblox source/main.cpp)
+add_executable(boomblox source/main.cpp source/Context.cpp)
 
 target_link_libraries(boomblox PRIVATE SDL3-static)
 target_include_directories(boomblox PRIVATE

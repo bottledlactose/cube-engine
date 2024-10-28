@@ -12,6 +12,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Context.hpp"
+
 struct PositionColorVertex {
     float x, y, z;
     float nx, ny, nz;
@@ -71,33 +73,18 @@ static SDL_GPUShader *LoadShader(
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
+    if (!Context::Get().Initialize()) {
+        return SDL_APP_FAILURE;
+    }
+
     // testing only
     projection_matrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        fprintf(stderr, "Unable to initialize SDL: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
+    device = Context::Get().GetDevice();
+    window = Context::Get().GetWindow();
 
-    device = SDL_CreateGPUDevice(SDL_ShaderCross_GetSPIRVShaderFormats(), true, nullptr);
-    if (device == nullptr) {
-        fprintf(stderr, "Unable to create GPU device: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    window = SDL_CreateWindow("SDL App", 800, 600, 0);
-    if (window == nullptr) {
-        fprintf(stderr, "Unable to create window: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    if (!SDL_ClaimWindowForGPUDevice(device, window)) {
-        fprintf(stderr, "Unable to claim window for GPU device: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    const char *base_path = SDL_GetBasePath();
+    std::string base_path = Context::Get().GetBasePath();
 
     std::string vertex_shader_path = base_path;
     vertex_shader_path += "shaders/basic_triangle.vert.spv";
