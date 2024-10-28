@@ -45,6 +45,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     device = Context::Get().GetDevice();
     window = Context::Get().GetWindow();
 
+    // TODO: Move shader loading to context initialization
     SDL_GPUShader *vertex_shader = Context::Get().LoadShader(SDL_GPU_SHADERSTAGE_VERTEX, "shaders/basic_triangle.vert.spv", 0, 1, 0, 0);
     if (vertex_shader == nullptr) {
         return SDL_APP_FAILURE;
@@ -61,62 +62,62 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
-    // TODO: Fix incomprehensible line-by-line kind of thing
-    SDL_GPUColorTargetDescription color_target_description;
-    SDL_zero(color_target_description);
-    color_target_description.format = SDL_GetGPUSwapchainTextureFormat(device, window);
+    SDL_GPUColorTargetDescription color_target_description = {
+        .format = SDL_GetGPUSwapchainTextureFormat(device, window)
+    };
 
-    SDL_GPUVertexBufferDescription vertex_buffer_description;
-    SDL_zero(vertex_buffer_description);
-    vertex_buffer_description.slot = 0;
-    vertex_buffer_description.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
-    vertex_buffer_description.instance_step_rate = 0;
-    vertex_buffer_description.pitch = sizeof(PositionColorVertex);
+    SDL_GPUVertexBufferDescription vertex_buffer_description = {
+        .slot = 0,
+        .pitch = sizeof(PositionColorVertex),
+        .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+        .instance_step_rate = 0,
+    };
 
-    SDL_GPUVertexAttribute vertex_attributes[3];
-    SDL_zero(vertex_attributes[0]);
-    vertex_attributes[0].buffer_slot = 0;
-    vertex_attributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-    vertex_attributes[0].location = 0;
-    vertex_attributes[0].offset = 0;
+    SDL_GPUVertexAttribute vertex_attributes[3] = {
+        {
+            .location = 0,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = 0
+        },
+        {
+            .location = 1,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = sizeof(float) * 3
+        },
+        {
+            .location = 2,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+            .offset = sizeof(float) * 6
+        }
+    };
 
-    SDL_zero(vertex_attributes[1]);
-    vertex_attributes[1].buffer_slot = 0;
-    vertex_attributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-    vertex_attributes[1].location = 1;
-    vertex_attributes[1].offset = sizeof(float) * 3;
+    // TODO: Move this to the context initialization
 
-    SDL_zero(vertex_attributes[2]);
-    vertex_attributes[2].buffer_slot = 0;
-    vertex_attributes[2].format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM;
-    vertex_attributes[2].location = 2;
-    vertex_attributes[2].offset = sizeof(float) * 6;
-
-    SDL_GPUVertexInputState vertex_input_state;
-    SDL_zero(vertex_input_state);
-    vertex_input_state.num_vertex_buffers = 1;
-    vertex_input_state.vertex_buffer_descriptions = &vertex_buffer_description;
-    vertex_input_state.num_vertex_attributes = 3;
-    vertex_input_state.vertex_attributes = vertex_attributes;
-
-    SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info;
-    SDL_zero(pipeline_create_info);
-
-    pipeline_create_info.target_info.num_color_targets = 1;
-    pipeline_create_info.target_info.color_target_descriptions = &color_target_description;
-    pipeline_create_info.target_info.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM;
-    pipeline_create_info.target_info.has_depth_stencil_target = true;
-
-    pipeline_create_info.depth_stencil_state.enable_depth_test = true;
-    pipeline_create_info.depth_stencil_state.enable_depth_write = true;
-    pipeline_create_info.depth_stencil_state.compare_op = SDL_GPU_COMPAREOP_LESS;
-
-    pipeline_create_info.vertex_input_state = vertex_input_state;
-    
-    pipeline_create_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-
-    pipeline_create_info.vertex_shader = vertex_shader;
-    pipeline_create_info.fragment_shader = fragment_shader;
+    SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info = {
+        .vertex_shader = vertex_shader,
+        .fragment_shader = fragment_shader,
+        .vertex_input_state = {
+            .vertex_buffer_descriptions = &vertex_buffer_description,
+            .num_vertex_buffers = 1,
+            .vertex_attributes = vertex_attributes,
+            .num_vertex_attributes = 3,
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .depth_stencil_state = {
+            .compare_op = SDL_GPU_COMPAREOP_LESS,
+            .enable_depth_test = true,
+            .enable_depth_write = true,
+        },
+        .target_info = {
+            .color_target_descriptions = &color_target_description,
+            .num_color_targets = 1,
+            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+            .has_depth_stencil_target = true
+        },
+    };
 
     pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_create_info);
     if (pipeline == nullptr) {

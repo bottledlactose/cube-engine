@@ -40,6 +40,7 @@ SDL_GPUShader *Context::LoadShader(
     Uint32 storage_buffer_count,
     Uint32 storage_texture_count
 ) {
+    // TODO: Move actual file loading to a separate function, something like an asset loader?
     size_t code_size;
     void *code = SDL_LoadFile((base_path + path).c_str(), &code_size);
     if (code == nullptr) {
