@@ -33,6 +33,67 @@ bool Context::Initialize() {
     return true;
 }
 
+SDL_GPUBuffer *Context::CreateMesh(void *data, u32 size) {
+
+    SDL_GPUBufferCreateInfo buffer_create_info = {
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = size
+    };
+
+    SDL_GPUBuffer *vertex_buffer = SDL_CreateGPUBuffer(device, &buffer_create_info);
+    if (vertex_buffer == nullptr) {
+        fprintf(stderr, "Unable to create vertex buffer: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    SDL_GPUTransferBufferCreateInfo transfer_buffer_create_info = {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = size
+    };
+
+    SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_buffer_create_info);
+    if (transfer_buffer == nullptr) {
+        fprintf(stderr, "Unable to create transfer buffer: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    void *transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
+    if (transfer_data == nullptr) {
+        fprintf(stderr, "Unable to map transfer buffer: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    SDL_memcpy(transfer_data, data, size);
+    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
+
+    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(device);
+    SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+
+    SDL_GPUTransferBufferLocation transfer_buffer_location = {
+        .transfer_buffer = transfer_buffer,
+        .offset = 0
+    };
+
+    SDL_GPUBufferRegion buffer_region = {
+        .buffer = vertex_buffer,
+        .offset = 0,
+        .size = size
+    };
+
+    SDL_UploadToGPUBuffer(copy_pass, &transfer_buffer_location, &buffer_region, false);
+
+    SDL_EndGPUCopyPass(copy_pass);
+    SDL_SubmitGPUCommandBuffer(command_buffer);
+    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
+
+    return vertex_buffer;
+}
+
+bool Context::DestroyMesh(SDL_GPUBuffer *buffer) {
+    SDL_ReleaseGPUBuffer(device, buffer);
+    return true;
+}
+
 bool Context::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader) {
     
     SDL_GPUColorTargetDescription color_target_description = {

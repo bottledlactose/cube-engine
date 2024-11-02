@@ -113,58 +113,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_ReleaseGPUShader(device, vertex_shader);
     SDL_ReleaseGPUShader(device, fragment_shader);
 
-    SDL_GPUBufferCreateInfo buffer_create_info;
-    SDL_zero(buffer_create_info);
-    buffer_create_info.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
-    buffer_create_info.size = sizeof(PositionColorVertex) * 36;
-
-    vertex_buffer = SDL_CreateGPUBuffer(device, &buffer_create_info);
+    vertex_buffer = Context::Get().CreateMesh(vertices, sizeof(PositionColorVertex) * 36);
     if (vertex_buffer == nullptr) {
-        fprintf(stderr, "Unable to create vertex buffer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-
-    SDL_GPUTransferBufferCreateInfo transfer_buffer_create_info;
-    SDL_zero(transfer_buffer_create_info);
-    transfer_buffer_create_info.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-    transfer_buffer_create_info.size = sizeof(PositionColorVertex) * 36;
-
-    SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_buffer_create_info);
-    if (transfer_buffer == nullptr) {
-        fprintf(stderr, "Unable to create transfer buffer: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    PositionColorVertex *transfer_data = (PositionColorVertex *)SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
-    if (transfer_data == nullptr) {
-        fprintf(stderr, "Unable to map transfer buffer: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-
-
-    SDL_memcpy(transfer_data, vertices, sizeof(PositionColorVertex) * 36);
-    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
-
-    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(device);
-    SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(command_buffer);
-
-    SDL_GPUTransferBufferLocation transfer_buffer_location;
-    SDL_zero(transfer_buffer_location);
-    transfer_buffer_location.transfer_buffer = transfer_buffer;
-    transfer_buffer_location.offset = 0;
-
-    SDL_GPUBufferRegion buffer_region;
-    SDL_zero(buffer_region);
-    buffer_region.buffer = vertex_buffer;
-    buffer_region.offset = 0;
-    buffer_region.size = sizeof(PositionColorVertex) * 36;
-
-    SDL_UploadToGPUBuffer(copy_pass, &transfer_buffer_location, &buffer_region, false);
-
-    SDL_EndGPUCopyPass(copy_pass);
-    SDL_SubmitGPUCommandBuffer(command_buffer);
-    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
 
     return SDL_APP_CONTINUE;
 }
@@ -205,10 +157,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
         //render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, nullptr);
 
-        SDL_GPUBufferBinding vertex_buffer_binding;
-        SDL_zero(vertex_buffer_binding);
-        vertex_buffer_binding.buffer = vertex_buffer;
-        vertex_buffer_binding.offset = 0;
+
+        
+        //SDL_zero(vertex_buffer_binding);
+        //vertex_buffer_binding.buffer = vertex_buffer;
+        //vertex_buffer_binding.offset = 0;
 
         SDL_BindGPUGraphicsPipeline(render_pass, Context::Get().GetDefaultPipeline());
 
@@ -217,6 +170,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
 
         SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
+                SDL_GPUBufferBinding vertex_buffer_binding = {
+            .buffer = vertex_buffer,
+            .offset = 0
+        };
         SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
         SDL_DrawGPUPrimitives(render_pass, 36, 1, 0, 0);
 

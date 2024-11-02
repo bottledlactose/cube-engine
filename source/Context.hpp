@@ -1,6 +1,8 @@
 #pragma once
 
-#include "singleton.hpp"
+#include "macros/singleton.hpp"
+#include "macros/types.hpp"
+
 #include <string>
 
 #include <SDL3/SDL.h>
@@ -30,7 +32,10 @@ public:
 
     SDL_GPUTexture *CreateDepthStencil(Uint32 width, Uint32 height);
     bool CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader);
-    
+
+    SDL_GPUBuffer *CreateMesh(void *data, u32 size);
+    bool DestroyMesh(SDL_GPUBuffer *buffer);
+
     SDL_GPUGraphicsPipeline *GetDefaultPipeline() const {
         return default_pipeline;
     }
