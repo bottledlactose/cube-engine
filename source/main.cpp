@@ -23,7 +23,8 @@ static SDL_GPUTexture *depth_texture = nullptr;
 
 static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
-static glm::mat4 model_matrix = glm::mat4(1.0f);
+static glm::mat4 model_matrix_a = glm::mat4(1.0f);
+static glm::mat4 model_matrix_b = glm::mat4(1.0f);
 
 static PositionColorVertex vertices[36] = {
     {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255},
@@ -166,14 +167,22 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         SDL_BindGPUGraphicsPipeline(render_pass, Context::Get().GetDefaultPipeline());
 
         // Rotate the model matrix
-        model_matrix = glm::rotate(model_matrix, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
-        glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+        model_matrix_a = glm::rotate(model_matrix_a, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
+        glm::mat4 mvp_a = projection_matrix * view_matrix * model_matrix_a;
 
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
-                SDL_GPUBufferBinding vertex_buffer_binding = {
+        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp_a, sizeof(glm::mat4));
+        SDL_GPUBufferBinding vertex_buffer_binding = {
             .buffer = vertex_buffer,
             .offset = 0
         };
+        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
+        SDL_DrawGPUPrimitives(render_pass, 36, 1, 0, 0);
+
+        // Rotate the model matrix
+        model_matrix_b = glm::rotate(model_matrix_b, glm::radians(0.5f), glm::vec3(1.0f, 0.5f, 0.0f));
+        glm::mat4 mvp_b = projection_matrix * view_matrix * model_matrix_b;
+
+        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp_b, sizeof(glm::mat4));
         SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
         SDL_DrawGPUPrimitives(render_pass, 36, 1, 0, 0);
 
