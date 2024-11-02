@@ -1,5 +1,6 @@
 #include "Context.hpp"
 
+#include "PositionColorVertex.hpp"
 #include <cstdio>
 
 #include <SDL_gpu_shadercross.h>
@@ -26,6 +27,72 @@ bool Context::Initialize() {
 
     if (!SDL_ClaimWindowForGPUDevice(device, window)) {
         fprintf(stderr, "Unable to claim window for GPU device: %s", SDL_GetError());
+        return false;
+    }
+
+    return true;
+}
+
+bool Context::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader) {
+    
+    SDL_GPUColorTargetDescription color_target_description = {
+        .format = SDL_GetGPUSwapchainTextureFormat(device, window)
+    };
+
+    SDL_GPUVertexBufferDescription vertex_buffer_description = {
+        .slot = 0,
+        .pitch = sizeof(PositionColorVertex),
+        .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+        .instance_step_rate = 0,
+    };
+
+    SDL_GPUVertexAttribute vertex_attributes[3] = {
+        {
+            .location = 0,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = 0
+        },
+        {
+            .location = 1,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = sizeof(float) * 3
+        },
+        {
+            .location = 2,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+            .offset = sizeof(float) * 6
+        }
+    };
+
+    SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info = {
+        .vertex_shader = vertex_shader,
+        .fragment_shader = fragment_shader,
+        .vertex_input_state = {
+            .vertex_buffer_descriptions = &vertex_buffer_description,
+            .num_vertex_buffers = 1,
+            .vertex_attributes = vertex_attributes,
+            .num_vertex_attributes = 3,
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .depth_stencil_state = {
+            .compare_op = SDL_GPU_COMPAREOP_LESS,
+            .enable_depth_test = true,
+            .enable_depth_write = true,
+        },
+        .target_info = {
+            .color_target_descriptions = &color_target_description,
+            .num_color_targets = 1,
+            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+            .has_depth_stencil_target = true
+        },
+    };
+
+    default_pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_create_info);
+    if (default_pipeline == nullptr) {
+        fprintf(stderr, "Unable to create graphics pipeline: %s", SDL_GetError());
         return false;
     }
 

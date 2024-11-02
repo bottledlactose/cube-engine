@@ -12,17 +12,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "PositionColorVertex.hpp"
 #include "Context.hpp"
-
-struct PositionColorVertex {
-    float x, y, z;
-    float nx, ny, nz;
-    Uint8 r, g, b, a; // TODO: Ensure this is the correct format
-};
 
 static SDL_GPUDevice *device = nullptr;
 static SDL_Window *window = nullptr;
-static SDL_GPUGraphicsPipeline *pipeline = nullptr;
 static SDL_GPUBuffer *vertex_buffer = nullptr;
 
 static SDL_GPUTexture *depth_texture = nullptr;
@@ -62,66 +56,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
-    SDL_GPUColorTargetDescription color_target_description = {
-        .format = SDL_GetGPUSwapchainTextureFormat(device, window)
-    };
-
-    SDL_GPUVertexBufferDescription vertex_buffer_description = {
-        .slot = 0,
-        .pitch = sizeof(PositionColorVertex),
-        .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
-        .instance_step_rate = 0,
-    };
-
-    SDL_GPUVertexAttribute vertex_attributes[3] = {
-        {
-            .location = 0,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-            .offset = 0
-        },
-        {
-            .location = 1,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-            .offset = sizeof(float) * 3
-        },
-        {
-            .location = 2,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
-            .offset = sizeof(float) * 6
-        }
-    };
-
-    // TODO: Move this to the context initialization
-
-    SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info = {
-        .vertex_shader = vertex_shader,
-        .fragment_shader = fragment_shader,
-        .vertex_input_state = {
-            .vertex_buffer_descriptions = &vertex_buffer_description,
-            .num_vertex_buffers = 1,
-            .vertex_attributes = vertex_attributes,
-            .num_vertex_attributes = 3,
-        },
-        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .depth_stencil_state = {
-            .compare_op = SDL_GPU_COMPAREOP_LESS,
-            .enable_depth_test = true,
-            .enable_depth_write = true,
-        },
-        .target_info = {
-            .color_target_descriptions = &color_target_description,
-            .num_color_targets = 1,
-            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
-            .has_depth_stencil_target = true
-        },
-    };
-
-    pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_create_info);
-    if (pipeline == nullptr) {
-        fprintf(stderr, "Unable to create graphics pipeline: %s", SDL_GetError());
+    if (!Context::Get().CreateDefaultPipeline(vertex_shader, fragment_shader)) {
         return SDL_APP_FAILURE;
     }
 
@@ -270,7 +205,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         vertex_buffer_binding.buffer = vertex_buffer;
         vertex_buffer_binding.offset = 0;
 
-        SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
+        SDL_BindGPUGraphicsPipeline(render_pass, Context::Get().GetDefaultPipeline());
 
         // Rotate the model matrix
         model_matrix = glm::rotate(model_matrix, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
@@ -299,7 +234,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     SDL_ReleaseGPUTexture(device, depth_texture);
     SDL_ReleaseGPUBuffer(device, vertex_buffer);
-    SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
+    SDL_ReleaseGPUGraphicsPipeline(device, Context::Get().GetDefaultPipeline());
     SDL_ReleaseWindowFromGPUDevice(device, window);
     SDL_DestroyGPUDevice(device);
     SDL_DestroyWindow(window);

@@ -12,6 +12,8 @@ private:
     SDL_GPUDevice *device;
     SDL_Window *window;
 
+    SDL_GPUGraphicsPipeline *default_pipeline;
+
     std::string base_path;
 
 public:
@@ -27,7 +29,12 @@ public:
     );
 
     SDL_GPUTexture *CreateDepthStencil(Uint32 width, Uint32 height);
-
+    bool CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader);
+    
+    SDL_GPUGraphicsPipeline *GetDefaultPipeline() const {
+        return default_pipeline;
+    }
+    
     inline SDL_GPUDevice *GetDevice() const {
         return device;
     }
