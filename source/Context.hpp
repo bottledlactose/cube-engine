@@ -11,12 +11,9 @@ class Context {
     MAKE_SINGLETON(Context)
 
 private:
-    SDL_GPUDevice *device;
     SDL_Window *window;
 
     SDL_GPUGraphicsPipeline *default_pipeline;
-
-    std::string base_path;
 
 public:
     bool Initialize();
@@ -33,15 +30,8 @@ public:
     SDL_GPUTexture *CreateDepthStencil(Uint32 width, Uint32 height);
     bool CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader);
 
-    SDL_GPUBuffer *CreateMesh(void *data, u32 size);
-    bool DestroyMesh(SDL_GPUBuffer *buffer);
-
     SDL_GPUGraphicsPipeline *GetDefaultPipeline() const {
         return default_pipeline;
-    }
-    
-    inline SDL_GPUDevice *GetDevice() const {
-        return device;
     }
 
     inline SDL_Window *GetWindow() const {
@@ -49,6 +39,6 @@ public:
     }
 
     inline std::string GetBasePath() const {
-        return base_path;
+        return SDL_GetBasePath();
     }
 };

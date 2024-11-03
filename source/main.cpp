@@ -12,12 +12,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+
+
 #include "PositionColorVertex.hpp"
 #include "Context.hpp"
+#include "graphics/Renderer.hpp"
 
 static SDL_GPUDevice *device = nullptr;
 static SDL_Window *window = nullptr;
-static SDL_GPUBuffer *vertex_buffer = nullptr;
+//static SDL_GPUBuffer *vertex_buffer = nullptr;
+static MeshHandle *mesh_handle = nullptr;
 
 static SDL_GPUTexture *depth_texture = nullptr;
 
@@ -87,7 +91,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     projection_matrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    device = Context::Get().GetDevice();
+    device = Renderer::Get().GetDevice();
     window = Context::Get().GetWindow();
 
     // TODO: Move shader loading to context initialization
@@ -114,8 +118,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_ReleaseGPUShader(device, vertex_shader);
     SDL_ReleaseGPUShader(device, fragment_shader);
 
-    vertex_buffer = Context::Get().CreateMesh(vertices, sizeof(PositionColorVertex) * 36);
-    if (vertex_buffer == nullptr) {
+    mesh_handle = Renderer::Get().CreateMesh(vertices, sizeof(PositionColorVertex) * 36, nullptr, 0);
+    if (mesh_handle == nullptr) {
         return SDL_APP_FAILURE;
     }
 
@@ -172,11 +176,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp_a, sizeof(glm::mat4));
         SDL_GPUBufferBinding vertex_buffer_binding = {
-            .buffer = vertex_buffer,
+            .buffer = mesh_handle->vertex_buffer,
             .offset = 0
         };
         SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
-        SDL_DrawGPUPrimitives(render_pass, 36, 1, 0, 0);
+        SDL_DrawGPUPrimitives(render_pass, mesh_handle->vertex_size, 1, 0, 0);
 
         // Rotate the model matrix
         model_matrix_b = glm::rotate(model_matrix_b, glm::radians(0.5f), glm::vec3(1.0f, 0.5f, 0.0f));
@@ -184,7 +188,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp_b, sizeof(glm::mat4));
         SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
-        SDL_DrawGPUPrimitives(render_pass, 36, 1, 0, 0);
+        SDL_DrawGPUPrimitives(render_pass, mesh_handle->vertex_size, 1, 0, 0);
 
         SDL_EndGPURenderPass(render_pass);
     }
@@ -204,10 +208,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     SDL_ReleaseGPUTexture(device, depth_texture);
-    SDL_ReleaseGPUBuffer(device, vertex_buffer);
+    //SDL_ReleaseGPUBuffer(device, vertex_buffer);
+    Renderer::Get().DestroyMesh(mesh_handle);
     SDL_ReleaseGPUGraphicsPipeline(device, Context::Get().GetDefaultPipeline());
     SDL_ReleaseWindowFromGPUDevice(device, window);
-    SDL_DestroyGPUDevice(device);
+    //SDL_DestroyGPUDevice(device);
+    Renderer::Get().Shutdown();
     SDL_DestroyWindow(window);
     
     SDL_Quit();

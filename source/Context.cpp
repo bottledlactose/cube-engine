@@ -1,6 +1,7 @@
 #include "Context.hpp"
 
 #include "PositionColorVertex.hpp"
+#include "graphics/Renderer.hpp"
 #include <cstdio>
 
 #include <SDL_gpu_shadercross.h>
@@ -11,90 +12,20 @@ bool Context::Initialize() {
         return false;
     }
 
-    base_path = SDL_GetBasePath();
-
-    device = SDL_CreateGPUDevice(SDL_ShaderCross_GetSPIRVShaderFormats(), true, nullptr);
-    if (device == nullptr) {
-        fprintf(stderr, "Unable to create GPU device: %s", SDL_GetError());
-        return false;
-    }
-
     window = SDL_CreateWindow("SDL App", 800, 600, 0);
     if (window == nullptr) {
         fprintf(stderr, "Unable to create window: %s", SDL_GetError());
         return false;
     }
 
-    if (!SDL_ClaimWindowForGPUDevice(device, window)) {
-        fprintf(stderr, "Unable to claim window for GPU device: %s", SDL_GetError());
-        return false;
-    }
+    Renderer::Get().Initialize(window);
 
-    return true;
-}
-
-SDL_GPUBuffer *Context::CreateMesh(void *data, u32 size) {
-
-    SDL_GPUBufferCreateInfo buffer_create_info = {
-        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-        .size = size
-    };
-
-    SDL_GPUBuffer *vertex_buffer = SDL_CreateGPUBuffer(device, &buffer_create_info);
-    if (vertex_buffer == nullptr) {
-        fprintf(stderr, "Unable to create vertex buffer: %s", SDL_GetError());
-        return nullptr;
-    }
-
-    SDL_GPUTransferBufferCreateInfo transfer_buffer_create_info = {
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = size
-    };
-
-    SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_buffer_create_info);
-    if (transfer_buffer == nullptr) {
-        fprintf(stderr, "Unable to create transfer buffer: %s", SDL_GetError());
-        return nullptr;
-    }
-
-    void *transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
-    if (transfer_data == nullptr) {
-        fprintf(stderr, "Unable to map transfer buffer: %s", SDL_GetError());
-        return nullptr;
-    }
-
-    SDL_memcpy(transfer_data, data, size);
-    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
-
-    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(device);
-    SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(command_buffer);
-
-    SDL_GPUTransferBufferLocation transfer_buffer_location = {
-        .transfer_buffer = transfer_buffer,
-        .offset = 0
-    };
-
-    SDL_GPUBufferRegion buffer_region = {
-        .buffer = vertex_buffer,
-        .offset = 0,
-        .size = size
-    };
-
-    SDL_UploadToGPUBuffer(copy_pass, &transfer_buffer_location, &buffer_region, false);
-
-    SDL_EndGPUCopyPass(copy_pass);
-    SDL_SubmitGPUCommandBuffer(command_buffer);
-    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
-
-    return vertex_buffer;
-}
-
-bool Context::DestroyMesh(SDL_GPUBuffer *buffer) {
-    SDL_ReleaseGPUBuffer(device, buffer);
     return true;
 }
 
 bool Context::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader) {
+
+    SDL_GPUDevice *device = Renderer::Get().GetDevice();
     
     SDL_GPUColorTargetDescription color_target_description = {
         .format = SDL_GetGPUSwapchainTextureFormat(device, window)
@@ -168,9 +99,11 @@ SDL_GPUShader *Context::LoadShader(
     Uint32 storage_buffer_count,
     Uint32 storage_texture_count
 ) {
+    SDL_GPUDevice *device = Renderer::Get().GetDevice();
+
     // TODO: Move actual file loading to a separate function, something like an asset loader?
     size_t code_size;
-    void *code = SDL_LoadFile((base_path + path).c_str(), &code_size);
+    void *code = SDL_LoadFile((GetBasePath() + path).c_str(), &code_size);
     if (code == nullptr) {
         fprintf(stderr, "Unable to load shader file: %s", SDL_GetError());
         return nullptr;
@@ -200,6 +133,8 @@ SDL_GPUShader *Context::LoadShader(
 }
 
 SDL_GPUTexture *Context::CreateDepthStencil(Uint32 width, Uint32 height) {
+    SDL_GPUDevice *device = Renderer::Get().GetDevice();
+
     SDL_GPUTextureCreateInfo create_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
