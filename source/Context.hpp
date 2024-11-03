@@ -25,8 +25,6 @@ public:
         Uint32 storage_texture_count
     );
 
-    SDL_GPUTexture *CreateDepthStencil(Uint32 width, Uint32 height);
-
     inline SDL_Window *GetWindow() const {
         return window;
     }

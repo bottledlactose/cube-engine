@@ -12,12 +12,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "graphics/PositionNormalColorVertex.hpp"
+#include "graphics/vertices/PositionNormalColorVertex.hpp"
 #include "Context.hpp"
 #include "graphics/Renderer.hpp"
 
-static SDL_GPUDevice *device = nullptr;
-static SDL_Window *window = nullptr;
 //static SDL_GPUBuffer *vertex_buffer = nullptr;
 static MeshHandle *mesh_handle = nullptr;
 
@@ -89,11 +87,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     projection_matrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    device = Renderer::Get().GetDevice();
-    window = Context::Get().GetWindow();
-
     // TODO: Handle window resizing
-    depth_texture = Context::Get().CreateDepthStencil(800, 600);
+    depth_texture = Renderer::Get().CreateDepthStencil(800, 600);
     if (depth_texture == nullptr) {
         return SDL_APP_FAILURE;
     }
@@ -108,14 +103,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
 
-    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(device);
+    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(Renderer::Get().GetDevice());
     if (command_buffer == nullptr) {
         fprintf(stderr, "Unable to acquire GPU command buffer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
     SDL_GPUTexture *swapchain_texture;
-    if (!SDL_AcquireGPUSwapchainTexture(command_buffer, window, &swapchain_texture, nullptr, nullptr)) {
+    if (!SDL_AcquireGPUSwapchainTexture(command_buffer, Context::Get().GetWindow(), &swapchain_texture, nullptr, nullptr)) {
         fprintf(stderr, "Unable to acquire GPU swapchain texture: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -140,7 +135,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         depth_stencil_target_info.cycle = true;
 
         render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
-        
+
         Renderer::Get().UseDefaultPipeline(render_pass);
 
         // Rotate the model matrix
@@ -180,13 +175,10 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    SDL_ReleaseGPUTexture(device, depth_texture);
-    //SDL_ReleaseGPUBuffer(device, vertex_buffer);
+    Renderer::Get().DestroyDepthStencil(depth_texture);
     Renderer::Get().DestroyMesh(mesh_handle);
-    //SDL_ReleaseWindowFromGPUDevice(device, window);
-    //SDL_DestroyGPUDevice(device);
-    Renderer::Get().Shutdown(Context::Get().GetWindow());
-    SDL_DestroyWindow(window);
+    Renderer::Get().Shutdown();
+    SDL_DestroyWindow(Context::Get().GetWindow());
     
     SDL_Quit();
 }

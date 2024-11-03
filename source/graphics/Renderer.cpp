@@ -4,7 +4,7 @@
 #include <cstdio>
 
 #include "Context.hpp"
-#include "PositionNormalColorVertex.hpp"
+#include "vertices/PositionNormalColorVertex.hpp"
 
 #include <SDL_gpu_shadercross.h>
 
@@ -13,6 +13,8 @@ bool Renderer::Initialize(SDL_Window *window) {
         fprintf(stderr, "Window is null");
         return false;
     }
+
+    
 
     device = SDL_CreateGPUDevice(SDL_ShaderCross_GetSPIRVShaderFormats(), true, nullptr);
     if (device == nullptr) {
@@ -47,6 +49,7 @@ bool Renderer::Initialize(SDL_Window *window) {
     SDL_ReleaseGPUShader(device, vertex_shader);
     SDL_ReleaseGPUShader(device, fragment_shader);
 
+    this->window = window;
     return true;
 }
 
@@ -61,7 +64,7 @@ void Renderer::UseDefaultPipeline(SDL_GPURenderPass *render_pass) const {
     SDL_BindGPUGraphicsPipeline(render_pass, default_pipeline);
 }
 
-void Renderer::Shutdown(SDL_Window *window) {
+void Renderer::Shutdown() {
     DestroyDefaultPipeline();
 
     if (device != nullptr) {
@@ -138,6 +141,35 @@ bool Renderer::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader
     }
 
     return true;
+}
+
+SDL_GPUTexture *Renderer::CreateDepthStencil(u32 width, u32 height) {
+    SDL_GPUDevice *device = Renderer::Get().GetDevice();
+
+    SDL_GPUTextureCreateInfo create_info = {
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+        .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+        .width = width,
+        .height = height,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+        .sample_count = SDL_GPU_SAMPLECOUNT_1,
+    };
+
+    SDL_GPUTexture *texture = SDL_CreateGPUTexture(device, &create_info);
+    if (texture == nullptr) {
+        fprintf(stderr, "Unable to create depth texture: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    return texture;
+}
+
+void Renderer::DestroyDepthStencil(SDL_GPUTexture *depth_texture) const {
+    if (depth_texture != nullptr) {
+        SDL_ReleaseGPUTexture(device, depth_texture);
+    }
 }
 
 MeshHandle *Renderer::CreateMesh(
