@@ -13,8 +13,6 @@ class Context {
 private:
     SDL_Window *window;
 
-    SDL_GPUGraphicsPipeline *default_pipeline;
-
 public:
     bool Initialize();
 
@@ -28,11 +26,6 @@ public:
     );
 
     SDL_GPUTexture *CreateDepthStencil(Uint32 width, Uint32 height);
-    bool CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader);
-
-    SDL_GPUGraphicsPipeline *GetDefaultPipeline() const {
-        return default_pipeline;
-    }
 
     inline SDL_Window *GetWindow() const {
         return window;

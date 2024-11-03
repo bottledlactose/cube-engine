@@ -11,9 +11,19 @@ MAKE_SINGLETON(Renderer)
 private:
     SDL_GPUDevice *device;
 
+    // TODO: Add map with multiple graphics pipelines
+    SDL_GPUGraphicsPipeline *default_pipeline;
+
 public:
     bool Initialize(SDL_Window *window);
-    void Shutdown();
+    void Shutdown(SDL_Window *window);
+
+    bool CreateDefaultPipeline(
+        SDL_GPUShader *vertex_shader,
+        SDL_GPUShader *fragment_shader
+    );
+    void DestroyDefaultPipeline();
+    void UseDefaultPipeline(SDL_GPURenderPass *render_pass) const;
 
     MeshHandle *CreateMesh(
         void *vertex_data, u32 vertex_size,

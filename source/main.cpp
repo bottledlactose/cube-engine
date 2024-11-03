@@ -12,9 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-
-
-#include "PositionColorVertex.hpp"
+#include "graphics/PositionNormalColorVertex.hpp"
 #include "Context.hpp"
 #include "graphics/Renderer.hpp"
 
@@ -30,7 +28,7 @@ static glm::mat4 view_matrix = glm::mat4(1.0f);
 static glm::mat4 model_matrix_a = glm::mat4(1.0f);
 static glm::mat4 model_matrix_b = glm::mat4(1.0f);
 
-static PositionColorVertex vertices[36] = {
+static PositionNormalColorVertex vertices[36] = {
     {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255},
     {0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0, 0, 255, 255},
     {-0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0, 255, 0, 255},
@@ -94,31 +92,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     device = Renderer::Get().GetDevice();
     window = Context::Get().GetWindow();
 
-    // TODO: Move shader loading to context initialization
-    SDL_GPUShader *vertex_shader = Context::Get().LoadShader(SDL_GPU_SHADERSTAGE_VERTEX, "shaders/basic_triangle.vert.spv", 0, 1, 0, 0);
-    if (vertex_shader == nullptr) {
-        return SDL_APP_FAILURE;
-    }
-
-    SDL_GPUShader *fragment_shader = Context::Get().LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "shaders/basic_triangle.frag.spv", 0, 0, 0, 0);
-    if (fragment_shader == nullptr) {
-        return SDL_APP_FAILURE;
-    }
-
     // TODO: Handle window resizing
     depth_texture = Context::Get().CreateDepthStencil(800, 600);
     if (depth_texture == nullptr) {
         return SDL_APP_FAILURE;
     }
 
-    if (!Context::Get().CreateDefaultPipeline(vertex_shader, fragment_shader)) {
-        return SDL_APP_FAILURE;
-    }
-
-    SDL_ReleaseGPUShader(device, vertex_shader);
-    SDL_ReleaseGPUShader(device, fragment_shader);
-
-    mesh_handle = Renderer::Get().CreateMesh(vertices, sizeof(PositionColorVertex) * 36, nullptr, 0);
+    mesh_handle = Renderer::Get().CreateMesh(vertices, sizeof(PositionNormalColorVertex) * 36, nullptr, 0);
     if (mesh_handle == nullptr) {
         return SDL_APP_FAILURE;
     }
@@ -160,15 +140,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         depth_stencil_target_info.cycle = true;
 
         render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
-        //render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, nullptr);
-
-
         
-        //SDL_zero(vertex_buffer_binding);
-        //vertex_buffer_binding.buffer = vertex_buffer;
-        //vertex_buffer_binding.offset = 0;
-
-        SDL_BindGPUGraphicsPipeline(render_pass, Context::Get().GetDefaultPipeline());
+        Renderer::Get().UseDefaultPipeline(render_pass);
 
         // Rotate the model matrix
         model_matrix_a = glm::rotate(model_matrix_a, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
@@ -210,10 +183,9 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     SDL_ReleaseGPUTexture(device, depth_texture);
     //SDL_ReleaseGPUBuffer(device, vertex_buffer);
     Renderer::Get().DestroyMesh(mesh_handle);
-    SDL_ReleaseGPUGraphicsPipeline(device, Context::Get().GetDefaultPipeline());
-    SDL_ReleaseWindowFromGPUDevice(device, window);
+    //SDL_ReleaseWindowFromGPUDevice(device, window);
     //SDL_DestroyGPUDevice(device);
-    Renderer::Get().Shutdown();
+    Renderer::Get().Shutdown(Context::Get().GetWindow());
     SDL_DestroyWindow(window);
     
     SDL_Quit();
