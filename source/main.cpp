@@ -16,15 +16,35 @@
 #include "Context.hpp"
 #include "graphics/Renderer.hpp"
 
-//static SDL_GPUBuffer *vertex_buffer = nullptr;
-static MeshHandle *mesh_handle = nullptr;
+// TODO: Clean up these weird definitions
 
+// testing
+void* __cdecl operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
+{
+	return new uint8_t[size];
+}
+
+// testing even more
+void* __cdecl operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* file, int line, unsigned int debugFlags, const char* name, int flags) {
+    // Implement a simple aligned memory allocation if needed
+    // For simplicity, assuming default alignment
+    return ::operator new(size);
+}
+
+#include <EASTL/vector.h>
+
+static MeshHandle *mesh_handle = nullptr;
 static SDL_GPUTexture *depth_texture = nullptr;
 
 static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
-static glm::mat4 model_matrix_a = glm::mat4(1.0f);
-static glm::mat4 model_matrix_b = glm::mat4(1.0f);
+
+static eastl::vector<glm::mat4> model_matrices = {
+    glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
+    glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+    glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+    glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+};
 
 static PositionNormalColorVertex vertices[36] = {
     {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255},
@@ -138,25 +158,22 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         Renderer::Get().UseDefaultPipeline(render_pass);
 
-        // Rotate the model matrix
-        model_matrix_a = glm::rotate(model_matrix_a, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
-        glm::mat4 mvp_a = projection_matrix * view_matrix * model_matrix_a;
+        for (const auto &model_matrix : model_matrices) {
+            glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+            Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
+        }
 
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp_a, sizeof(glm::mat4));
-        SDL_GPUBufferBinding vertex_buffer_binding = {
-            .buffer = mesh_handle->vertex_buffer,
-            .offset = 0
-        };
-        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
-        SDL_DrawGPUPrimitives(render_pass, mesh_handle->vertex_size, 1, 0, 0);
+        // // Rotate the model matrix
+        // model_matrix_a = glm::rotate(model_matrix_a, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
+        // glm::mat4 mvp = projection_matrix * view_matrix * model_matrix_a;
 
-        // Rotate the model matrix
-        model_matrix_b = glm::rotate(model_matrix_b, glm::radians(0.5f), glm::vec3(1.0f, 0.5f, 0.0f));
-        glm::mat4 mvp_b = projection_matrix * view_matrix * model_matrix_b;
+        // Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
 
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp_b, sizeof(glm::mat4));
-        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
-        SDL_DrawGPUPrimitives(render_pass, mesh_handle->vertex_size, 1, 0, 0);
+        
+        // model_matrix_b = glm::rotate(model_matrix_b, glm::radians(0.5f), glm::vec3(1.0f, 0.5f, 0.0f));
+        // glm::mat4 mvp_2 = projection_matrix * view_matrix * model_matrix_b;
+
+        //Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp_2);
 
         SDL_EndGPURenderPass(render_pass);
     }

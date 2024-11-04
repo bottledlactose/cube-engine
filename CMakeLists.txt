@@ -9,6 +9,8 @@ set(SDL_STATIC ON CACHE BOOL "")
 
 add_subdirectory(thirdparty/sdl)
 
+add_subdirectory(thirdparty/eastl)
+
 file(GLOB_RECURSE SOURCES
     source/*.cpp
     source/*.hpp
@@ -20,10 +22,12 @@ file(GLOB_RECURSE SOURCES
 
 add_executable(boomblox ${SOURCES})
 
-target_link_libraries(boomblox PRIVATE SDL3-static)
+target_link_libraries(boomblox PRIVATE SDL3-static EASTL)
 target_include_directories(boomblox PRIVATE
     source
     thirdparty/sdl/include
     thirdparty/shadercross
     thirdparty/glm
+    thirdparty/eabase/include/Common
+    thirdparty/eastl/include
 )

@@ -5,6 +5,9 @@
 #include "MeshHandle.hpp"
 #include <SDL3/SDL.h>
 
+// TESTING ONLY for helper function
+#include <glm/glm.hpp>
+
 class Renderer {
 MAKE_SINGLETON(Renderer)
 
@@ -34,6 +37,17 @@ public:
         void *index_data, u32 index_size
     ) const;
     void DestroyMesh(MeshHandle *mesh) const;
+
+    // Temporary helper function
+    void DrawCube(SDL_GPUCommandBuffer *command_buffer, SDL_GPURenderPass *render_pass, MeshHandle *mesh, glm::mat4 mvp) const {
+        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
+        SDL_GPUBufferBinding vertex_buffer_binding = {
+            .buffer = mesh->vertex_buffer,
+            .offset = 0
+        };
+        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
+        SDL_DrawGPUPrimitives(render_pass, mesh->vertex_size, 1, 0, 0);
+    }
 
     inline SDL_GPUDevice *GetDevice() const {
         return device;
