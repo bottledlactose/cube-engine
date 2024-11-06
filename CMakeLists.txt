@@ -11,6 +11,9 @@ add_subdirectory(thirdparty/sdl)
 
 add_subdirectory(thirdparty/eastl)
 
+# Jolt Physics
+add_subdirectory(thirdparty/jolt/Build)
+
 file(GLOB_RECURSE SOURCES
     source/*.cpp
     source/*.hpp
@@ -22,7 +25,7 @@ file(GLOB_RECURSE SOURCES
 
 add_executable(boomblox ${SOURCES})
 
-target_link_libraries(boomblox PRIVATE SDL3-static EASTL)
+target_link_libraries(boomblox PRIVATE SDL3-static EASTL Jolt)
 target_include_directories(boomblox PRIVATE
     source
     thirdparty/sdl/include
@@ -30,4 +33,5 @@ target_include_directories(boomblox PRIVATE
     thirdparty/glm
     thirdparty/eabase/include/Common
     thirdparty/eastl/include
+    thirdparty/jolt
 )
