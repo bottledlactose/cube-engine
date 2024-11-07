@@ -286,15 +286,22 @@ static PositionNormalColorVertex vertices[36] = {
 
 // Physics testing objects
 static JPH::PhysicsSystem physics_system;
-//static JPH::BodyInterface *body_interface;
-//static JPH::TempAllocatorImpl temp_allocator(10 * 1024 * 1024);
-//static JPH::JobSystemThreadPool job_system;
-//static JPH::JobSystemThreadPool job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
 
 JPH::JobSystemThreadPool *p_job_system;
 JPH::TempAllocator *p_temp_allocator;
 
+BPLayerInterfaceImpl broad_phase_layer_interface;
+ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter;
+ObjectLayerPairFilterImpl object_vs_layer_filter;
+
+MyBodyActivationListener body_activation_listener;    
+MyContactListener contact_listener;
+
+JPH::BodyID floor_id;
 JPH::BodyID sphere_id;
+
+int step = 0;
+// End physics testing objects
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
@@ -331,18 +338,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     // Register all types
     JPH::RegisterTypes();
 
-    //JPH::TempAllocatorImpl temp_allocator(10 * 1024 * 1024);
-    //temp_allocator = new JPH::TempAllocatorImpl(10 * 1024 * 1024);
-    //p_temp_allocator = &temp_allocator;
     p_temp_allocator = new JPH::TempAllocatorImpl(10 * 1024 * 1024);
-
-    //JPH::JobSystemThreadPool job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
-    //job_system = new JPH::JobSystemThreadPool(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
-
-    //job_system = ;
-
-    //JPH::JobSystemThreadPool job_system(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
-    //p_job_system = &job_system;
     p_job_system = new JPH::JobSystemThreadPool(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, std::thread::hardware_concurrency() - 1);
 
     const JPH::uint cMaxBodies = 1024;
@@ -350,19 +346,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     const JPH::uint cMaxBodyPairs = 1024;
     const JPH::uint cMaxContactConstraints = 1024;
 
-    BPLayerInterfaceImpl broad_phase_layer_interface;
-    ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter;
-    ObjectLayerPairFilterImpl object_vs_layer_filter;
-
-    //JPH::PhysicsSystem physics_system;
-    //physics_system = new JPH::PhysicsSystem();
-
     physics_system.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, broad_phase_layer_interface, object_vs_broad_phase_layer_filter, object_vs_layer_filter);
 
-    MyBodyActivationListener body_activation_listener;
     physics_system.SetBodyActivationListener(&body_activation_listener);
-
-    MyContactListener contact_listener;
     physics_system.SetContactListener(&contact_listener);
 
     JPH::BodyInterface &body_interface = physics_system.GetBodyInterface();
@@ -378,49 +364,34 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     JPH::BodyCreationSettings floor_settings(floor_shape, JPH::Vec3(0.0f, -2.5f, 0.0f), JPH::Quat::sIdentity(), JPH::EMotionType::Static, Layers::NON_MOVING);
     JPH::Body *floor = body_interface.CreateBody(floor_settings);
 
-    body_interface.AddBody(floor->GetID(), JPH::EActivation::DontActivate);
+    //body_interface.AddBody(floor->GetID(), JPH::EActivation::DontActivate);
+    floor_id = body_interface.CreateAndAddBody(floor_settings, JPH::EActivation::DontActivate);
 
     // Create a dynamic body to bounce on the floor
     JPH::BodyCreationSettings sphere_settings(new JPH::SphereShape(0.5f), JPH::RVec3(0.0, 2.0, 0.0), JPH::Quat::sIdentity(), JPH::EMotionType::Dynamic, Layers::MOVING);
-    //JPH::BodyID sphere_id = body_interface.CreateAndAddBody(sphere_settings, JPH::EActivation::Activate);
-
-    //sphere_id = new JPH::BodyID(body_interface.CreateAndAddBody(sphere_settings, JPH::EActivation::Activate));
-    //JPH::BodyID sphere_id = body_interface.CreateAndAddBody(sphere_settings, JPH::EActivation::Activate);
     sphere_id = body_interface.CreateAndAddBody(sphere_settings, JPH::EActivation::Activate);
 
-    
-
-    body_interface.SetLinearVelocity(sphere_id, JPH::Vec3(0.0f, -3.5f, 0.0f));
-
-    
+    body_interface.SetLinearVelocity(sphere_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
 
     physics_system.OptimizeBroadPhase();
 
-    //JPH::BodyInterface &body_interface = physics_system.GetBodyInterface();
+    return SDL_APP_CONTINUE;
+}
 
-
-    while (true) {
-
-
-
+SDL_AppResult SDL_AppIterate(void *appstate) {
     // Physics testing
     JPH::BodyInterface &body_interface = physics_system.GetBodyInterface();
 
-
     JPH::RVec3 position = body_interface.GetCenterOfMassPosition(sphere_id);
 	JPH::Vec3 velocity = body_interface.GetLinearVelocity(sphere_id);
-	
-    //cout << "Step " << step << ": Position = (" << position.GetX() << ", " << position.GetY() << ", " << position.GetZ() << "), Velocity = (" << velocity.GetX() << ", " << velocity.GetY() << ", " << velocity.GetZ() << ")" << endl;
-    printf("Step %d: Position = (%f, %f, %f), Velocity = (%f, %f, %f)\n", 0, position.GetX(), position.GetY(), position.GetZ(), velocity.GetX(), velocity.GetY(), velocity.GetZ());
+
+    printf("Step %d: Position = (%f, %f, %f), Velocity = (%f, %f, %f)\n", step, position.GetX(), position.GetY(), position.GetZ(), velocity.GetX(), velocity.GetY(), velocity.GetZ());
+    ++step;
 
     // Update physics
     const float cDeltaTime = 1.0f / 60.0f;
     const int cCollisionSteps = 1;
 
-    assert(p_temp_allocator != nullptr);
-    assert(p_job_system != nullptr);
-
-    //JPH::TempAllocatorImpl temp_allocator(10 * 1024 * 1024);
     physics_system.Update(cDeltaTime, cCollisionSteps, p_temp_allocator, p_job_system);
 
     SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(Renderer::Get().GetDevice());
@@ -458,54 +429,18 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
         Renderer::Get().UseDefaultPipeline(render_pass);
 
-
         glm::mat4 model_matrix = glm::mat4(1.0f);
         model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
 
-        // print model matrix posiiton
-        //cout << "Model matrix position: " << model_matrix[3][0] << ", " << model_matrix[3][1] << ", " << model_matrix[3][2] << endl;
-        
-
         glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
         Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
-
-
-
-
-        // for (const auto &model_matrix : model_matrices) {
-        //     glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
-        //     Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
-        // }
-
-        // // Rotate the model matrix
-        // model_matrix_a = glm::rotate(model_matrix_a, glm::radians(0.5f), glm::vec3(0.5f, 1.0f, 0.0f));
-        // glm::mat4 mvp = projection_matrix * view_matrix * model_matrix_a;
-
-        // Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
-
-        
-        // model_matrix_b = glm::rotate(model_matrix_b, glm::radians(0.5f), glm::vec3(1.0f, 0.5f, 0.0f));
-        // glm::mat4 mvp_2 = projection_matrix * view_matrix * model_matrix_b;
-
-        //Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp_2);
 
         SDL_EndGPURenderPass(render_pass);
     }
 
     SDL_SubmitGPUCommandBuffer(command_buffer);
-
-
-
-
-        SDL_Delay(1000 / 60);
-    }
-
-
-
-    return SDL_APP_CONTINUE;
-}
-
-SDL_AppResult SDL_AppIterate(void *appstate) {
+    // TODO: Properly handle frame timing
+    SDL_Delay(1000 / 60);
 
     return SDL_APP_CONTINUE;
 }
@@ -519,6 +454,25 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+    JPH::BodyInterface &body_interface = physics_system.GetBodyInterface();
+
+    body_interface.RemoveBody(sphere_id);
+    body_interface.DestroyBody(sphere_id);
+
+    body_interface.RemoveBody(floor_id);
+    body_interface.DestroyBody(floor_id);
+
+    JPH::UnregisterTypes();
+
+    delete JPH::Factory::sInstance;
+    JPH::Factory::sInstance = nullptr;
+
+    delete p_temp_allocator;
+    p_temp_allocator = nullptr;
+
+    delete p_job_system;
+    p_job_system = nullptr;
+
     Renderer::Get().DestroyDepthStencil(depth_texture);
     Renderer::Get().DestroyMesh(mesh_handle);
     Renderer::Get().Shutdown();
