@@ -33,6 +33,17 @@ public:
     void DestroyDefaultPipeline();
     void UseDefaultPipeline(SDL_GPURenderPass *inRenderPass) const;
 
+    SDL_GPUShader *CreateShader(
+        SDL_GPUShaderStage inStage,
+        const Uint8 *inCode,
+        size_t inCodeSize,
+        u32 inSamplerCount,
+        u32 inUniformBufferCount,
+        u32 inStorageBufferCount,
+        u32 inStorageTextureCount
+    ) const;
+    void DestroyShader(SDL_GPUShader *inShader) const;
+
     SDL_GPUTexture *CreateDepthStencil(u32 inWidth, u32 inHeight);
     void DestroyDepthStencil(SDL_GPUTexture *inDepthStencil) const;
 

@@ -4,9 +4,6 @@
 
 #include "graphics/RenderService.hpp"
 
-// Keep this here until we move shader stuff outside of the Context class
-#include <SDL_gpu_shadercross.h>
-
 bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
     // Initialize the SDL video subsystem, needed for window creation and rendering
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
@@ -58,24 +55,15 @@ SDL_GPUShader *Context::LoadShader(
         return nullptr;
     }
 
-    SDL_GPUShaderCreateInfo create_info = {
-        .code_size = code_size,
-        .code = (const Uint8 *)code,
-        .entrypoint = "main",
-        .format = SDL_GPU_SHADERFORMAT_SPIRV,
-        .stage = stage,
-        .num_samplers = sampler_count,
-        .num_storage_textures = storage_texture_count,
-        .num_storage_buffers = storage_buffer_count,
-        .num_uniform_buffers = uniform_buffer_count,
-    };
-
-    SDL_GPUShader *shader = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(device, &create_info);
-    if (shader == nullptr) {
-        LOG_ERROR("Unable to create shader: %s", SDL_GetError());
-        SDL_free(code);
-        return nullptr;
-    }
+    SDL_GPUShader *shader = RenderService::Get().CreateShader(
+        stage,
+        (const Uint8 *)code,
+        code_size,
+        sampler_count,
+        uniform_buffer_count,
+        storage_buffer_count,
+        storage_texture_count
+    );
 
     SDL_free(code);
     return shader;

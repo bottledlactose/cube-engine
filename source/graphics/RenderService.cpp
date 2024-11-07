@@ -1,5 +1,7 @@
 #include "RenderService.hpp"
 
+#include "macros/log.hpp"
+
 // Testing only
 #include <cstdio>
 #include <cassert>
@@ -137,6 +139,41 @@ bool RenderService::CreateDefaultPipeline(SDL_GPUShader *inVertexShader, SDL_GPU
     }
 
     return true;
+}
+
+SDL_GPUShader *RenderService::CreateShader(
+    SDL_GPUShaderStage inStage,
+    const Uint8 *inCode,
+    size_t inCodeSize,
+    u32 inSamplerCount,
+    u32 inUniformBufferCount,
+    u32 inStorageBufferCount,
+    u32 inStorageTextureCount
+) const {
+
+    SDL_GPUShaderCreateInfo create_info = {
+        .code_size = inCodeSize,
+        .code = inCode,
+        .entrypoint = "main",
+        .format = SDL_GPU_SHADERFORMAT_SPIRV,
+        .stage = inStage,
+        .num_samplers = inSamplerCount,
+        .num_storage_textures = inStorageTextureCount,
+        .num_storage_buffers = inStorageBufferCount,
+        .num_uniform_buffers = inUniformBufferCount,
+    };
+
+    SDL_GPUShader *shader = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(mDevice, &create_info);
+    if (shader == nullptr) {
+        LOG_ERROR("Unable to create shader: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    return shader;
+}
+
+void RenderService::DestroyShader(SDL_GPUShader *inShader) const {
+
 }
 
 SDL_GPUTexture *RenderService::CreateDepthStencil(u32 inWidth, u32 inHeight) {
