@@ -22,7 +22,9 @@ bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
     }
 
     // Begin initializating services here
-    RenderService::Get().Initialize(mWindow);
+    if (!RenderService::Get().Initialize(mWindow)) {
+        return false;
+    }
 
     return true;
 }

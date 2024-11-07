@@ -312,7 +312,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     // testing only
     // TODO: Handle window resizing
     projection_matrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     // TODO: Handle window resizing
     depth_texture = RenderService::Get().CreateDepthStencil(800, 600);
