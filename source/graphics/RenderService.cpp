@@ -1,28 +1,25 @@
-#include "Renderer.hpp"
+#include "RenderService.hpp"
 
 // Testing only
 #include <cstdio>
+#include <cassert>
 
 #include "Context.hpp"
 #include "vertices/PositionNormalColorVertex.hpp"
 
 #include <SDL_gpu_shadercross.h>
 
-bool Renderer::Initialize(SDL_Window *window) {
-    if (window == nullptr) {
-        fprintf(stderr, "Window is null");
-        return false;
-    }
+bool RenderService::Initialize(SDL_Window *inWindow) {
+    assert(inWindow != nullptr);
+    mWindow = inWindow;
 
-    
-
-    device = SDL_CreateGPUDevice(SDL_ShaderCross_GetSPIRVShaderFormats(), true, nullptr);
-    if (device == nullptr) {
+    mDevice = SDL_CreateGPUDevice(SDL_ShaderCross_GetSPIRVShaderFormats(), true, nullptr);
+    if (mDevice == nullptr) {
         fprintf(stderr, "Unable to create GPU device: %s", SDL_GetError());
         return false;
     }
 
-    if (!SDL_ClaimWindowForGPUDevice(device, window)) {
+    if (!SDL_ClaimWindowForGPUDevice(mDevice, mWindow)) {
         fprintf(stderr, "Unable to claim window for GPU device: %s", SDL_GetError());
         return false;
     }
@@ -46,38 +43,37 @@ bool Renderer::Initialize(SDL_Window *window) {
 
     CreateDefaultPipeline(vertex_shader, fragment_shader);
 
-    SDL_ReleaseGPUShader(device, vertex_shader);
-    SDL_ReleaseGPUShader(device, fragment_shader);
+    SDL_ReleaseGPUShader(mDevice, vertex_shader);
+    SDL_ReleaseGPUShader(mDevice, fragment_shader);
 
-    this->window = window;
     return true;
 }
 
-void Renderer::DestroyDefaultPipeline() {
+void RenderService::DestroyDefaultPipeline() {
     if (default_pipeline != nullptr) {
-        SDL_ReleaseGPUGraphicsPipeline(device, default_pipeline);
+        SDL_ReleaseGPUGraphicsPipeline(mDevice, default_pipeline);
         default_pipeline = nullptr;
     }
 }
 
-void Renderer::UseDefaultPipeline(SDL_GPURenderPass *render_pass) const {
+void RenderService::UseDefaultPipeline(SDL_GPURenderPass *render_pass) const {
     SDL_BindGPUGraphicsPipeline(render_pass, default_pipeline);
 }
 
-void Renderer::Shutdown() {
+void RenderService::Shutdown() {
     DestroyDefaultPipeline();
 
-    if (device != nullptr) {
-        SDL_ReleaseWindowFromGPUDevice(device, window);
-        SDL_DestroyGPUDevice(device);
-        device = nullptr;
+    if (mDevice != nullptr) {
+        SDL_ReleaseWindowFromGPUDevice(mDevice, mWindow);
+        SDL_DestroyGPUDevice(mDevice);
+        mDevice = nullptr;
     }
 }
 
-bool Renderer::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader) {
+bool RenderService::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader) {
 
     SDL_GPUColorTargetDescription color_target_description = {
-        .format = SDL_GetGPUSwapchainTextureFormat(device, Context::Get().GetWindow())
+        .format = SDL_GetGPUSwapchainTextureFormat(mDevice, Context::Get().GetWindow())
     };
 
     SDL_GPUVertexBufferDescription vertex_buffer_description = {
@@ -134,7 +130,7 @@ bool Renderer::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader
         },
     };
 
-    default_pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_create_info);
+    default_pipeline = SDL_CreateGPUGraphicsPipeline(mDevice, &pipeline_create_info);
     if (default_pipeline == nullptr) {
         fprintf(stderr, "Unable to create graphics pipeline: %s", SDL_GetError());
         return false;
@@ -143,9 +139,7 @@ bool Renderer::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader
     return true;
 }
 
-SDL_GPUTexture *Renderer::CreateDepthStencil(u32 width, u32 height) {
-    SDL_GPUDevice *device = Renderer::Get().GetDevice();
-
+SDL_GPUTexture *RenderService::CreateDepthStencil(u32 width, u32 height) {
     SDL_GPUTextureCreateInfo create_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
@@ -157,7 +151,7 @@ SDL_GPUTexture *Renderer::CreateDepthStencil(u32 width, u32 height) {
         .sample_count = SDL_GPU_SAMPLECOUNT_1,
     };
 
-    SDL_GPUTexture *texture = SDL_CreateGPUTexture(device, &create_info);
+    SDL_GPUTexture *texture = SDL_CreateGPUTexture(mDevice, &create_info);
     if (texture == nullptr) {
         fprintf(stderr, "Unable to create depth texture: %s", SDL_GetError());
         return nullptr;
@@ -166,13 +160,13 @@ SDL_GPUTexture *Renderer::CreateDepthStencil(u32 width, u32 height) {
     return texture;
 }
 
-void Renderer::DestroyDepthStencil(SDL_GPUTexture *depth_texture) const {
+void RenderService::DestroyDepthStencil(SDL_GPUTexture *depth_texture) const {
     if (depth_texture != nullptr) {
-        SDL_ReleaseGPUTexture(device, depth_texture);
+        SDL_ReleaseGPUTexture(mDevice, depth_texture);
     }
 }
 
-MeshHandle *Renderer::CreateMesh(
+MeshHandle *RenderService::CreateMesh(
     void *vertex_data, u32 vertex_size,
     void *index_data, u32 index_size
 ) const {
@@ -189,7 +183,7 @@ MeshHandle *Renderer::CreateMesh(
         .size = vertex_size
     };
 
-    mesh->vertex_buffer = SDL_CreateGPUBuffer(device, &buffer_create_info);
+    mesh->vertex_buffer = SDL_CreateGPUBuffer(mDevice, &buffer_create_info);
     if (mesh->vertex_buffer == nullptr) {
         fprintf(stderr, "Unable to create vertex buffer: %s", SDL_GetError());
         DestroyMesh(mesh);
@@ -203,25 +197,25 @@ MeshHandle *Renderer::CreateMesh(
         .size = vertex_size
     };
 
-    SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(device, &transfer_buffer_create_info);
+    SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(mDevice, &transfer_buffer_create_info);
     if (transfer_buffer == nullptr) {
         fprintf(stderr, "Unable to create transfer buffer: %s", SDL_GetError());
         DestroyMesh(mesh);
         return nullptr;
     }
 
-    void *transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
+    void *transfer_data = SDL_MapGPUTransferBuffer(mDevice, transfer_buffer, false);
     if (transfer_data == nullptr) {
         fprintf(stderr, "Unable to map transfer buffer: %s", SDL_GetError());
-        SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
+        SDL_ReleaseGPUTransferBuffer(mDevice, transfer_buffer);
         DestroyMesh(mesh);
         return nullptr;
     }
 
     SDL_memcpy(transfer_data, vertex_data, vertex_size);
-    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
+    SDL_UnmapGPUTransferBuffer(mDevice, transfer_buffer);
 
-    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(device);
+    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(mDevice);
     SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 
     SDL_GPUTransferBufferLocation transfer_buffer_location = {
@@ -239,15 +233,15 @@ MeshHandle *Renderer::CreateMesh(
 
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(command_buffer);
-    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
+    SDL_ReleaseGPUTransferBuffer(mDevice, transfer_buffer);
 
     return mesh;
 }
 
-void Renderer::DestroyMesh(MeshHandle *mesh) const {
+void RenderService::DestroyMesh(MeshHandle *mesh) const {
     if (mesh != nullptr) {
         if (mesh->vertex_buffer != nullptr) {
-            SDL_ReleaseGPUBuffer(device, mesh->vertex_buffer);
+            SDL_ReleaseGPUBuffer(mDevice, mesh->vertex_buffer);
         }
 
         SDL_free(mesh);

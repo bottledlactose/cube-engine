@@ -1,7 +1,7 @@
 #include "Context.hpp"
 
 //#include "PositionColorVertex.hpp"
-#include "graphics/Renderer.hpp"
+#include "graphics/RenderService.hpp"
 #include <cstdio>
 
 #include <SDL_gpu_shadercross.h>
@@ -18,7 +18,7 @@ bool Context::Initialize() {
         return false;
     }
 
-    Renderer::Get().Initialize(window);
+    RenderService::Get().Initialize(window);
 
     return true;
 }
@@ -31,7 +31,7 @@ SDL_GPUShader *Context::LoadShader(
     Uint32 storage_buffer_count,
     Uint32 storage_texture_count
 ) {
-    SDL_GPUDevice *device = Renderer::Get().GetDevice();
+    SDL_GPUDevice *device = RenderService::Get().GetDevice();
 
     // TODO: Move actual file loading to a separate function, something like an asset loader?
     size_t code_size;

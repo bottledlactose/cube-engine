@@ -14,7 +14,7 @@
 
 #include "graphics/vertices/PositionNormalColorVertex.hpp"
 #include "Context.hpp"
-#include "graphics/Renderer.hpp"
+#include "graphics/RenderService.hpp"
 
 // The Jolt headers don't include Jolt.h. Always include Jolt.h before including any other Jolt header.
 // You can use Jolt.h in your precompiled header to speed up compilation.
@@ -315,12 +315,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     // TODO: Handle window resizing
-    depth_texture = Renderer::Get().CreateDepthStencil(800, 600);
+    depth_texture = RenderService::Get().CreateDepthStencil(800, 600);
     if (depth_texture == nullptr) {
         return SDL_APP_FAILURE;
     }
 
-    mesh_handle = Renderer::Get().CreateMesh(vertices, sizeof(PositionNormalColorVertex) * 36, nullptr, 0);
+    mesh_handle = RenderService::Get().CreateMesh(vertices, sizeof(PositionNormalColorVertex) * 36, nullptr, 0);
     if (mesh_handle == nullptr) {
         return SDL_APP_FAILURE;
     }
@@ -394,7 +394,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
     physics_system.Update(cDeltaTime, cCollisionSteps, p_temp_allocator, p_job_system);
 
-    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(Renderer::Get().GetDevice());
+    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(RenderService::Get().GetDevice());
     if (command_buffer == nullptr) {
         fprintf(stderr, "Unable to acquire GPU command buffer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
@@ -427,13 +427,13 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
 
-        Renderer::Get().UseDefaultPipeline(render_pass);
+        RenderService::Get().UseDefaultPipeline(render_pass);
 
         glm::mat4 model_matrix = glm::mat4(1.0f);
         model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
 
         glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
-        Renderer::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
+        RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
 
         SDL_EndGPURenderPass(render_pass);
     }
@@ -473,9 +473,9 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     delete p_job_system;
     p_job_system = nullptr;
 
-    Renderer::Get().DestroyDepthStencil(depth_texture);
-    Renderer::Get().DestroyMesh(mesh_handle);
-    Renderer::Get().Shutdown();
+    RenderService::Get().DestroyDepthStencil(depth_texture);
+    RenderService::Get().DestroyMesh(mesh_handle);
+    RenderService::Get().Shutdown();
     SDL_DestroyWindow(Context::Get().GetWindow());
     
     SDL_Quit();

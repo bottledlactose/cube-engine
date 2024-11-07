@@ -8,35 +8,39 @@
 // TESTING ONLY for helper function
 #include <glm/glm.hpp>
 
-class Renderer {
-MAKE_SINGLETON(Renderer)
+#include <EASTL/string.h>
+#include <EASTL/unordered_map.h>
 
+class RenderService {
+MAKE_SINGLETON(RenderService)
 private:
-    SDL_GPUDevice *device;
-    SDL_Window *window;
+    SDL_GPUDevice *mDevice;
+    SDL_Window *mWindow;
 
     // TODO: Add map with multiple graphics pipelines
     SDL_GPUGraphicsPipeline *default_pipeline;
 
+    eastl::unordered_map<eastl::string, SDL_GPUGraphicsPipeline *> mPipelines;
+
 public:
-    bool Initialize(SDL_Window *window);
+    bool Initialize(SDL_Window *inWindow);
     void Shutdown();
 
     bool CreateDefaultPipeline(
-        SDL_GPUShader *vertex_shader,
-        SDL_GPUShader *fragment_shader
+        SDL_GPUShader *inVertexShader,
+        SDL_GPUShader *inFragmentShader
     );
     void DestroyDefaultPipeline();
-    void UseDefaultPipeline(SDL_GPURenderPass *render_pass) const;
+    void UseDefaultPipeline(SDL_GPURenderPass *inRenderPass) const;
 
-    SDL_GPUTexture *CreateDepthStencil(u32 width, u32 height);
-    void DestroyDepthStencil(SDL_GPUTexture *depth_texture) const;
+    SDL_GPUTexture *CreateDepthStencil(u32 inWidth, u32 inHeight);
+    void DestroyDepthStencil(SDL_GPUTexture *inDepthStencil) const;
 
     MeshHandle *CreateMesh(
-        void *vertex_data, u32 vertex_size,
-        void *index_data, u32 index_size
+        void *inVertexData, u32 inVertexSize,
+        void *inIndexData, u32 inIndexSize
     ) const;
-    void DestroyMesh(MeshHandle *mesh) const;
+    void DestroyMesh(MeshHandle *inMesh) const;
 
     // Temporary helper function
     void DrawCube(SDL_GPUCommandBuffer *command_buffer, SDL_GPURenderPass *render_pass, MeshHandle *mesh, glm::mat4 mvp) const {
@@ -50,6 +54,6 @@ public:
     }
 
     inline SDL_GPUDevice *GetDevice() const {
-        return device;
+        return mDevice;
     }
 };
