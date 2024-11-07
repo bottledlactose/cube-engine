@@ -56,8 +56,8 @@ void RenderService::DestroyDefaultPipeline() {
     }
 }
 
-void RenderService::UseDefaultPipeline(SDL_GPURenderPass *render_pass) const {
-    SDL_BindGPUGraphicsPipeline(render_pass, default_pipeline);
+void RenderService::UseDefaultPipeline(SDL_GPURenderPass *inRenderPass) const {
+    SDL_BindGPUGraphicsPipeline(inRenderPass, default_pipeline);
 }
 
 void RenderService::Shutdown() {
@@ -70,7 +70,7 @@ void RenderService::Shutdown() {
     }
 }
 
-bool RenderService::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUShader *fragment_shader) {
+bool RenderService::CreateDefaultPipeline(SDL_GPUShader *inVertexShader, SDL_GPUShader *inFragmentShader) {
 
     SDL_GPUColorTargetDescription color_target_description = {
         .format = SDL_GetGPUSwapchainTextureFormat(mDevice, Context::Get().GetWindow())
@@ -108,8 +108,8 @@ bool RenderService::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUS
     };
 
     SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info = {
-        .vertex_shader = vertex_shader,
-        .fragment_shader = fragment_shader,
+        .vertex_shader = inVertexShader,
+        .fragment_shader = inFragmentShader,
         .vertex_input_state = {
             .vertex_buffer_descriptions = &vertex_buffer_description,
             .num_vertex_buffers = 1,
@@ -139,13 +139,13 @@ bool RenderService::CreateDefaultPipeline(SDL_GPUShader *vertex_shader, SDL_GPUS
     return true;
 }
 
-SDL_GPUTexture *RenderService::CreateDepthStencil(u32 width, u32 height) {
+SDL_GPUTexture *RenderService::CreateDepthStencil(u32 inWidth, u32 inHeight) {
     SDL_GPUTextureCreateInfo create_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
         .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-        .width = width,
-        .height = height,
+        .width = inWidth,
+        .height = inHeight,
         .layer_count_or_depth = 1,
         .num_levels = 1,
         .sample_count = SDL_GPU_SAMPLECOUNT_1,
@@ -167,8 +167,8 @@ void RenderService::DestroyDepthStencil(SDL_GPUTexture *depth_texture) const {
 }
 
 MeshHandle *RenderService::CreateMesh(
-    void *vertex_data, u32 vertex_size,
-    void *index_data, u32 index_size
+    void *inVertexData, u32 inVertexSize,
+    void *inIndexData, u32 inIndexSize
 ) const {
     MeshHandle *mesh = (MeshHandle *)SDL_malloc(sizeof(MeshHandle));
     if (mesh == nullptr) {
@@ -176,11 +176,11 @@ MeshHandle *RenderService::CreateMesh(
         return nullptr;
     }
 
-    mesh->vertex_size = vertex_size;
+    mesh->vertex_size = inVertexSize;
 
     SDL_GPUBufferCreateInfo buffer_create_info = {
         .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-        .size = vertex_size
+        .size = inVertexSize
     };
 
     mesh->vertex_buffer = SDL_CreateGPUBuffer(mDevice, &buffer_create_info);
@@ -194,7 +194,7 @@ MeshHandle *RenderService::CreateMesh(
 
     SDL_GPUTransferBufferCreateInfo transfer_buffer_create_info = {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = vertex_size
+        .size = inVertexSize
     };
 
     SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(mDevice, &transfer_buffer_create_info);
@@ -212,7 +212,7 @@ MeshHandle *RenderService::CreateMesh(
         return nullptr;
     }
 
-    SDL_memcpy(transfer_data, vertex_data, vertex_size);
+    SDL_memcpy(transfer_data, inVertexData, inVertexSize);
     SDL_UnmapGPUTransferBuffer(mDevice, transfer_buffer);
 
     SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(mDevice);
@@ -226,7 +226,7 @@ MeshHandle *RenderService::CreateMesh(
     SDL_GPUBufferRegion buffer_region = {
         .buffer = mesh->vertex_buffer,
         .offset = 0,
-        .size = vertex_size
+        .size = inVertexSize
     };
 
     SDL_UploadToGPUBuffer(copy_pass, &transfer_buffer_location, &buffer_region, false);
@@ -238,12 +238,12 @@ MeshHandle *RenderService::CreateMesh(
     return mesh;
 }
 
-void RenderService::DestroyMesh(MeshHandle *mesh) const {
-    if (mesh != nullptr) {
-        if (mesh->vertex_buffer != nullptr) {
-            SDL_ReleaseGPUBuffer(mDevice, mesh->vertex_buffer);
+void RenderService::DestroyMesh(MeshHandle *inMesh) const {
+    if (inMesh != nullptr) {
+        if (inMesh->vertex_buffer != nullptr) {
+            SDL_ReleaseGPUBuffer(mDevice, inMesh->vertex_buffer);
         }
 
-        SDL_free(mesh);
+        SDL_free(inMesh);
     }
 }

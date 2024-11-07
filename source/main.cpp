@@ -305,7 +305,7 @@ int step = 0;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
-    if (!Context::Get().Initialize()) {
+    if (!Context::Get().Initialize({ "boomblox", 1270, 720 })) {
         return SDL_APP_FAILURE;
     }
 
@@ -475,8 +475,6 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 
     RenderService::Get().DestroyDepthStencil(depth_texture);
     RenderService::Get().DestroyMesh(mesh_handle);
-    RenderService::Get().Shutdown();
-    SDL_DestroyWindow(Context::Get().GetWindow());
-    
-    SDL_Quit();
+
+    Context::Get().Shutdown();
 }

@@ -7,14 +7,20 @@
 
 #include <SDL3/SDL.h>
 
-class Context {
-    MAKE_SINGLETON(Context)
+struct ContextCreateInfo {
+    const char *mTitle;
+    i32 mWidth;
+    i32 mHeight;
+};
 
+class Context {
+MAKE_SINGLETON(Context)
 private:
-    SDL_Window *window;
+    SDL_Window *mWindow;
 
 public:
-    bool Initialize();
+    bool Initialize(const ContextCreateInfo &inCreateInfo);
+    void Shutdown();
 
     SDL_GPUShader *LoadShader(
         SDL_GPUShaderStage stage,
@@ -26,7 +32,7 @@ public:
     );
 
     inline SDL_Window *GetWindow() const {
-        return window;
+        return mWindow;
     }
 
     inline std::string GetBasePath() const {

@@ -1,26 +1,41 @@
 #include "Context.hpp"
 
-//#include "PositionColorVertex.hpp"
-#include "graphics/RenderService.hpp"
-#include <cstdio>
+#include "macros/log.hpp"
 
+#include "graphics/RenderService.hpp"
+
+// Keep this here until we move shader stuff outside of the Context class
 #include <SDL_gpu_shadercross.h>
 
-bool Context::Initialize() {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        fprintf(stderr, "Unable to initialize SDL: %s", SDL_GetError());
+bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
+    // Initialize the SDL video subsystem, needed for window creation and rendering
+    if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
+        LOG_ERROR("Unable to initialize SDL video subsystem: %s", SDL_GetError());
         return false;
     }
 
-    window = SDL_CreateWindow("SDL App", 800, 600, 0);
-    if (window == nullptr) {
-        fprintf(stderr, "Unable to create window: %s", SDL_GetError());
+    // Create the main window for the game
+    mWindow = SDL_CreateWindow(inCreateInfo.mTitle, inCreateInfo.mWidth, inCreateInfo.mHeight, 0);
+    if (mWindow == nullptr) {
+        LOG_ERROR("Unable to create window: %s", SDL_GetError());
         return false;
     }
 
-    RenderService::Get().Initialize(window);
+    // Begin initializating services here
+    RenderService::Get().Initialize(mWindow);
 
     return true;
+}
+
+void Context::Shutdown() {
+    RenderService::Get().Shutdown();
+
+    if (mWindow != nullptr) {
+        SDL_DestroyWindow(mWindow);
+        mWindow = nullptr;
+    }
+
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 SDL_GPUShader *Context::LoadShader(
@@ -37,7 +52,7 @@ SDL_GPUShader *Context::LoadShader(
     size_t code_size;
     void *code = SDL_LoadFile((GetBasePath() + path).c_str(), &code_size);
     if (code == nullptr) {
-        fprintf(stderr, "Unable to load shader file: %s", SDL_GetError());
+        LOG_ERROR("Unable to load shader file: %s", SDL_GetError());
         return nullptr;
     }
 
@@ -55,7 +70,7 @@ SDL_GPUShader *Context::LoadShader(
 
     SDL_GPUShader *shader = SDL_ShaderCross_CompileGraphicsShaderFromSPIRV(device, &create_info);
     if (shader == nullptr) {
-        fprintf(stderr, "Unable to create shader: %s", SDL_GetError());
+        LOG_ERROR("Unable to create shader: %s", SDL_GetError());
         SDL_free(code);
         return nullptr;
     }
