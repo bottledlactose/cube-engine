@@ -40,12 +40,16 @@ static SDL_GPUTexture *depth_texture = nullptr;
 static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
 
-static eastl::vector<glm::mat4> model_matrices = {
-    glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)),
-    glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
-    glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
-    glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+static eastl::vector<JPH::Vec3> box_positions = {
+    JPH::Vec3(0.0f, 0.0f, 0.0f),
+    JPH::Vec3(1.0f, 0.0f, 0.0f),
+    JPH::Vec3(0.0f, 1.0f, 0.0f),
+    JPH::Vec3(0.0f, -1.0f, 0.0f),
+    JPH::Vec3(0.0f, 0.0f, 1.0f),
+    JPH::Vec3(0.0f, 0.0f, -1.0f),
 };
+
+static eastl::vector<JPH::BodyID> bodies;
 
 static PositionNormalColorVertex vertices[36] = {
     {-0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 255, 0, 0, 255},
@@ -98,7 +102,6 @@ static PositionNormalColorVertex vertices[36] = {
 };
 
 static JPH::BodyID floor_id;
-static JPH::BodyID sphere_id;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
@@ -123,10 +126,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
 
     floor_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
-    sphere_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, 2.0f, 0.0f), JPH::Vec3(1.0f, 1.0f, 1.0f), true);
 
-    // Hack to just get the box to fall
-    PhysicsService::Get().GetBodyInterface().SetLinearVelocity(sphere_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
+    for (const JPH::Vec3 &position : box_positions) {
+        JPH::BodyID box_id = PhysicsService::Get().CreateBox(position, JPH::Vec3(0.5f, 0.5f, 0.5f), true);
+        PhysicsService::Get().GetBodyInterface().SetLinearVelocity(box_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
+        bodies.push_back(box_id);
+    }
 
     return SDL_APP_CONTINUE;
 }
@@ -134,9 +139,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 SDL_AppResult SDL_AppIterate(void *appstate) {
 
     JPH::BodyInterface &body_interface = PhysicsService::Get().GetBodyInterface();
-
-    JPH::RVec3 position = body_interface.GetCenterOfMassPosition(sphere_id);
-	JPH::Vec3 velocity = body_interface.GetLinearVelocity(sphere_id);
 
     PhysicsService::Get().Update();
 
@@ -175,11 +177,20 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         RenderService::Get().UseDefaultPipeline(render_pass);
 
-        glm::mat4 model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
+        for (const JPH::BodyID &body_id : bodies) {
+            JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);
+            glm::mat4 model_matrix = glm::mat4(1.0f);
+            model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
 
-        glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
-        RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
+            glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+            RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
+        }
+
+        //glm::mat4 model_matrix = glm::mat4(1.0f);
+        //model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
+
+        //glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+        //RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
 
         SDL_EndGPURenderPass(render_pass);
     }
@@ -200,7 +211,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-    PhysicsService::Get().DestroyBody(sphere_id);
+
+    for (const JPH::BodyID &body_id : bodies) {
+        PhysicsService::Get().DestroyBody(body_id);
+    }
+
     PhysicsService::Get().DestroyBody(floor_id);
 
     RenderService::Get().DestroyDepthStencil(depth_texture);
