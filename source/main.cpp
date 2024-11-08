@@ -48,6 +48,7 @@ static eastl::vector<JPH::Vec3> box_positions = {
     JPH::Vec3(0.0f, -1.0f, 0.0f),
     JPH::Vec3(0.0f, 0.0f, 1.0f),
     JPH::Vec3(0.0f, 0.0f, -1.0f),
+    JPH::Vec3(0.55f, 5.0f, 0.0f),
 };
 
 static eastl::vector<JPH::BodyID> bodies;
@@ -112,11 +113,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     // testing only, move to camera class
     // TODO: Handle window resizing
-    projection_matrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    projection_matrix = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
     view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     // TODO: Handle window resizing
-    depth_texture = RenderService::Get().CreateDepthStencil(800, 600);
+    depth_texture = RenderService::Get().CreateDepthStencil(1280, 720);
     if (depth_texture == nullptr) {
         return SDL_APP_FAILURE;
     }
