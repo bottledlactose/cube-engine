@@ -57,6 +57,19 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
                 SDL_GPU_SHADERSTAGE_FRAGMENT,
                 0, 0, 0, 0
             }
+        },
+        {
+            "light_source",
+            {
+                "shaders/light_source.vert.spv",
+                SDL_GPU_SHADERSTAGE_VERTEX,
+                0, 1, 0, 0
+            },
+            {
+                "shaders/light_source.frag.spv",
+                SDL_GPU_SHADERSTAGE_FRAGMENT,
+                0, 0, 0, 0
+            }
         }
     };
 
@@ -92,32 +105,6 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
         Context::Get().GetContent().UnloadShader(info.mVertexShader.mPath);
         Context::Get().GetContent().UnloadShader(info.mFragmentShader.mPath);
     }
-
-
-
-
-
-    // // TODO: Make shader loading easier
-    // SDL_GPUShader *vertex_shader = Context::Get().GetContent().LoadShader(
-    //     "shaders/basic_triangle.vert.spv",
-    //     SDL_GPU_SHADERSTAGE_VERTEX,
-    //     0, 1, 0, 0);
-    // if (vertex_shader == nullptr) {
-    //     return false;
-    // }
-
-    // SDL_GPUShader *fragment_shader = Context::Get().GetContent().LoadShader(
-    //     "shaders/basic_triangle.frag.spv",
-    //     SDL_GPU_SHADERSTAGE_FRAGMENT,
-    //     0, 0, 0, 0);
-    // if (fragment_shader == nullptr) {
-    //     return false;
-    // }
-
-    // CreateDefaultPipeline(vertex_shader, fragment_shader);
-
-    // Context::Get().GetContent().UnloadShader("shaders/basic_triangle.vert.spv");
-    // Context::Get().GetContent().UnloadShader("shaders/basic_triangle.frag.spv");
 
     return true;
 }

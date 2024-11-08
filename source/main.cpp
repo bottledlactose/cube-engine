@@ -41,6 +41,8 @@ static SDL_GPUTexture *depth_texture = nullptr;
 static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
 
+static glm::vec3 light_position = glm::vec3(-1.0f, 1.0f, 1.2f);
+
 static eastl::vector<JPH::Vec3> box_positions = {
     JPH::Vec3(0.0f, 0.0f, 0.0f),
     JPH::Vec3(1.0f, 0.0f, 0.0f),
@@ -192,6 +194,16 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
             RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
         }
+
+        // Draw light sources
+        RenderService::Get().UsePipeline(render_pass, "light_source");
+
+        glm::mat4 model_matrix = glm::mat4(1.0f);
+        model_matrix = glm::translate(model_matrix, light_position);
+        model_matrix = glm::scale(model_matrix, glm::vec3(0.1f, 0.1f, 0.1f));
+        glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+
+        RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
 
         SDL_EndGPURenderPass(render_pass);
     }

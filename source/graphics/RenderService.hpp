@@ -51,8 +51,18 @@ public:
     ) const;
     void DestroyMesh(MeshHandle *inMesh) const;
 
-    // Temporary helper function
+    // Temporary helper functions
     void DrawCube(SDL_GPUCommandBuffer *command_buffer, SDL_GPURenderPass *render_pass, MeshHandle *mesh, glm::mat4 mvp) const {
+        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
+        SDL_GPUBufferBinding vertex_buffer_binding = {
+            .buffer = mesh->vertex_buffer,
+            .offset = 0
+        };
+        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
+        SDL_DrawGPUPrimitives(render_pass, mesh->vertex_size, 1, 0, 0);
+    }
+
+    void DrawLight(SDL_GPUCommandBuffer *command_buffer, SDL_GPURenderPass *render_pass, MeshHandle *mesh, glm::mat4 mvp) const {
         SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
         SDL_GPUBufferBinding vertex_buffer_binding = {
             .buffer = mesh->vertex_buffer,
