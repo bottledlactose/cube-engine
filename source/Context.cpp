@@ -3,6 +3,7 @@
 #include "macros/log.hpp"
 
 #include "graphics/RenderService.hpp"
+#include "physics/PhysicsService.hpp"
 
 bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
     // Initialize the SDL video subsystem, needed for window creation and rendering
@@ -23,10 +24,15 @@ bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
         return false;
     }
 
+    if (!PhysicsService::Get().Initialize()) {
+        return false;
+    }
+
     return true;
 }
 
 void Context::Shutdown() {
+    PhysicsService::Get().Shutdown();
     RenderService::Get().Shutdown();
 
     if (mWindow != nullptr) {
@@ -45,9 +51,6 @@ SDL_GPUShader *Context::LoadShader(
     Uint32 storage_buffer_count,
     Uint32 storage_texture_count
 ) {
-    SDL_GPUDevice *device = RenderService::Get().GetDevice();
-
-    // TODO: Move actual file loading to a separate function, something like an asset loader?
     size_t code_size;
     void *code = SDL_LoadFile((GetBasePath() + path).c_str(), &code_size);
     if (code == nullptr) {
