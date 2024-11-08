@@ -177,7 +177,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
 
-        RenderService::Get().UseDefaultPipeline(render_pass);
+        RenderService::Get().UsePipeline(render_pass, "default_mesh");
 
         for (const JPH::BodyID &body_id : bodies) {
             JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);

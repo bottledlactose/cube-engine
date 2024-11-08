@@ -17,21 +17,19 @@ private:
     SDL_GPUDevice *mDevice;
     SDL_Window *mWindow;
 
-    // TODO: Add map with multiple graphics pipelines
-    SDL_GPUGraphicsPipeline *default_pipeline;
-
     eastl::unordered_map<eastl::string, SDL_GPUGraphicsPipeline *> mPipelines;
 
 public:
     bool Initialize(SDL_Window *inWindow);
     void Shutdown();
 
-    bool CreateDefaultPipeline(
+    bool CreatePipeline(
+        const eastl::string &inName,
         SDL_GPUShader *inVertexShader,
         SDL_GPUShader *inFragmentShader
     );
-    void DestroyDefaultPipeline();
-    void UseDefaultPipeline(SDL_GPURenderPass *inRenderPass) const;
+    void DestroyPipeline(const eastl::string &inName);
+    void UsePipeline(SDL_GPURenderPass *inRenderPass, const eastl::string &inName) const;
 
     SDL_GPUShader *CreateShader(
         SDL_GPUShaderStage inStage,

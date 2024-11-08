@@ -9,7 +9,25 @@
 #include "Context.hpp"
 #include "vertices/PositionNormalColorVertex.hpp"
 
+#include <EASTL/vector.h>
+
 #include <SDL_gpu_shadercross.h>
+
+// Testing
+struct ShaderCreateInfo {
+    const eastl::string &mPath;
+    SDL_GPUShaderStage mStage;
+    Uint32 mSamplerCount;
+    Uint32 mUniformBufferCount;
+    Uint32 mStorageBufferCount;
+    Uint32 mStorageTextureCount;
+};
+
+struct PipelineCreateInfo {
+    eastl::string mName;
+    ShaderCreateInfo mVertexShader;
+    ShaderCreateInfo mFragmentShader;
+};
 
 bool RenderService::Initialize(SDL_Window *inWindow) {
     assert(inWindow != nullptr);
@@ -26,44 +44,109 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
         return false;
     }
 
-    // TODO: Make shader loading easier
-    SDL_GPUShader *vertex_shader = Context::Get().GetContent().LoadShader(
-        "shaders/basic_triangle.vert.spv",
-        SDL_GPU_SHADERSTAGE_VERTEX,
-        0, 1, 0, 0);
-    if (vertex_shader == nullptr) {
-        return false;
+    eastl::vector<PipelineCreateInfo> pipeline_info = {
+        {
+            "default_mesh",
+            {
+                "shaders/basic_triangle.vert.spv",
+                SDL_GPU_SHADERSTAGE_VERTEX,
+                0, 1, 0, 0
+            },
+            {
+                "shaders/basic_triangle.frag.spv",
+                SDL_GPU_SHADERSTAGE_FRAGMENT,
+                0, 0, 0, 0
+            }
+        }
+    };
+
+    for (auto &info : pipeline_info) {
+        //PipelineCreateInfo &info = pair.second;
+
+        SDL_GPUShader *vertex_shader = Context::Get().GetContent().LoadShader(
+            info.mVertexShader.mPath,
+            info.mVertexShader.mStage,
+            info.mVertexShader.mSamplerCount,
+            info.mVertexShader.mUniformBufferCount,
+            info.mVertexShader.mStorageBufferCount,
+            info.mVertexShader.mStorageTextureCount
+        );
+        if (vertex_shader == nullptr) {
+            return false;
+        }
+
+        SDL_GPUShader *fragment_shader = Context::Get().GetContent().LoadShader(
+            info.mFragmentShader.mPath,
+            info.mFragmentShader.mStage,
+            info.mFragmentShader.mSamplerCount,
+            info.mFragmentShader.mUniformBufferCount,
+            info.mFragmentShader.mStorageBufferCount,
+            info.mFragmentShader.mStorageTextureCount
+        );
+        if (fragment_shader == nullptr) {
+            return false;
+        }
+
+        CreatePipeline(info.mName, vertex_shader, fragment_shader);
+
+        Context::Get().GetContent().UnloadShader(info.mVertexShader.mPath);
+        Context::Get().GetContent().UnloadShader(info.mFragmentShader.mPath);
     }
 
-    SDL_GPUShader *fragment_shader = Context::Get().GetContent().LoadShader(
-        "shaders/basic_triangle.frag.spv",
-        SDL_GPU_SHADERSTAGE_FRAGMENT,
-        0, 0, 0, 0);
-    if (fragment_shader == nullptr) {
-        return false;
-    }
 
-    CreateDefaultPipeline(vertex_shader, fragment_shader);
 
-    Context::Get().GetContent().UnloadShader("shaders/basic_triangle.vert.spv");
-    Context::Get().GetContent().UnloadShader("shaders/basic_triangle.frag.spv");
+
+
+    // // TODO: Make shader loading easier
+    // SDL_GPUShader *vertex_shader = Context::Get().GetContent().LoadShader(
+    //     "shaders/basic_triangle.vert.spv",
+    //     SDL_GPU_SHADERSTAGE_VERTEX,
+    //     0, 1, 0, 0);
+    // if (vertex_shader == nullptr) {
+    //     return false;
+    // }
+
+    // SDL_GPUShader *fragment_shader = Context::Get().GetContent().LoadShader(
+    //     "shaders/basic_triangle.frag.spv",
+    //     SDL_GPU_SHADERSTAGE_FRAGMENT,
+    //     0, 0, 0, 0);
+    // if (fragment_shader == nullptr) {
+    //     return false;
+    // }
+
+    // CreateDefaultPipeline(vertex_shader, fragment_shader);
+
+    // Context::Get().GetContent().UnloadShader("shaders/basic_triangle.vert.spv");
+    // Context::Get().GetContent().UnloadShader("shaders/basic_triangle.frag.spv");
 
     return true;
 }
 
-void RenderService::DestroyDefaultPipeline() {
-    if (default_pipeline != nullptr) {
-        SDL_ReleaseGPUGraphicsPipeline(mDevice, default_pipeline);
-        default_pipeline = nullptr;
+void RenderService::DestroyPipeline(const eastl::string &inName) {
+    auto it = mPipelines.find(inName);
+    if (it != mPipelines.end()) {
+        SDL_ReleaseGPUGraphicsPipeline(mDevice, it->second);
+        mPipelines.erase(it);
     }
 }
 
-void RenderService::UseDefaultPipeline(SDL_GPURenderPass *inRenderPass) const {
-    SDL_BindGPUGraphicsPipeline(inRenderPass, default_pipeline);
+void RenderService::UsePipeline(SDL_GPURenderPass *inRenderPass, const eastl::string &inName) const {
+
+    auto it = mPipelines.find(inName);
+    if (it == mPipelines.end()) {
+        //fprintf(stderr, "Pipeline not found: %s", inName.c_str());
+        LOG_ERROR("Pipeline not found: %s", inName.c_str());
+        return;
+    }
+
+    SDL_BindGPUGraphicsPipeline(inRenderPass, it->second);
 }
 
 void RenderService::Shutdown() {
-    DestroyDefaultPipeline();
+
+    for (auto &pair : mPipelines) {
+        SDL_ReleaseGPUGraphicsPipeline(mDevice, pair.second);
+    }
 
     if (mDevice != nullptr) {
         SDL_ReleaseWindowFromGPUDevice(mDevice, mWindow);
@@ -72,7 +155,7 @@ void RenderService::Shutdown() {
     }
 }
 
-bool RenderService::CreateDefaultPipeline(SDL_GPUShader *inVertexShader, SDL_GPUShader *inFragmentShader) {
+bool RenderService::CreatePipeline(const eastl::string &inName, SDL_GPUShader *inVertexShader, SDL_GPUShader *inFragmentShader) {
 
     SDL_GPUColorTargetDescription color_target_description = {
         .format = SDL_GetGPUSwapchainTextureFormat(mDevice, Context::Get().GetWindow())
@@ -132,12 +215,13 @@ bool RenderService::CreateDefaultPipeline(SDL_GPUShader *inVertexShader, SDL_GPU
         },
     };
 
-    default_pipeline = SDL_CreateGPUGraphicsPipeline(mDevice, &pipeline_create_info);
-    if (default_pipeline == nullptr) {
+    SDL_GPUGraphicsPipeline *pipeline = SDL_CreateGPUGraphicsPipeline(mDevice, &pipeline_create_info);
+    if (pipeline == nullptr) {
         fprintf(stderr, "Unable to create graphics pipeline: %s", SDL_GetError());
         return false;
     }
 
+    mPipelines[inName] = pipeline;
     return true;
 }
 
