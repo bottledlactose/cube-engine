@@ -11,6 +11,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "graphics/vertices/PositionNormalColorVertex.hpp"
 #include "Context.hpp"
@@ -179,18 +180,17 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         for (const JPH::BodyID &body_id : bodies) {
             JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);
+            JPH::Quat rotation = body_interface.GetRotation(body_id);
+
+            glm::quat glm_rotation = glm::quat(rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ());
+
             glm::mat4 model_matrix = glm::mat4(1.0f);
             model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
+            model_matrix *= glm::mat4_cast(glm_rotation);
 
             glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
             RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
         }
-
-        //glm::mat4 model_matrix = glm::mat4(1.0f);
-        //model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
-
-        //glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
-        //RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp);
 
         SDL_EndGPURenderPass(render_pass);
     }
