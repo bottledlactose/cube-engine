@@ -191,22 +191,19 @@ private:
     MyContactListener mContactListener;
 
     // Testing hardcoded objects
-    JPH::BodyID mFloorID;
     JPH::BodyID mSphereID;
 
 public:
     bool Initialize();
     void Shutdown();
+    
+    JPH::BodyID CreateBox(const JPH::Vec3 &inPosition, const JPH::Vec3 &inSize, bool inIsDynamic = false);
+    void DestroyBody(JPH::BodyID inBodyID);
 
     void Update();
 
     inline JPH::BodyInterface &GetBodyInterface() {
         return mPhysicsSystem.GetBodyInterface();
-    }
-
-    // Testing helper functions
-    inline JPH::BodyID GetFloorID() const {
-        return mFloorID;
     }
 
     inline JPH::BodyID GetSphereID() const {

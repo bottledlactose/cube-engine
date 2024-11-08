@@ -97,6 +97,8 @@ static PositionNormalColorVertex vertices[36] = {
     {0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 255, 0, 255, 255},
 };
 
+static JPH::BodyID floor_id;
+
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     if (!Context::Get().Initialize({ "boomblox", 1270, 720 })) {
@@ -119,6 +121,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
+    floor_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
+
     return SDL_APP_CONTINUE;
 }
 
@@ -127,7 +131,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     JPH::BodyInterface &body_interface = PhysicsService::Get().GetBodyInterface();
 
     JPH::BodyID sphere_id = PhysicsService::Get().GetSphereID();
-    JPH::BodyID floor_id = PhysicsService::Get().GetFloorID();
+    //JPH::BodyID floor_id = PhysicsService::Get().GetFloorID();
 
     JPH::RVec3 position = body_interface.GetCenterOfMassPosition(sphere_id);
 	JPH::Vec3 velocity = body_interface.GetLinearVelocity(sphere_id);
@@ -197,6 +201,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+    PhysicsService::Get().DestroyBody(floor_id);
+
     RenderService::Get().DestroyDepthStencil(depth_texture);
     RenderService::Get().DestroyMesh(mesh_handle);
 
