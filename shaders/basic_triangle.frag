@@ -12,23 +12,15 @@ layout (binding = 0, set = 3) uniform UBO {
 };
 
 void main() {
-
-    // testing
-
-    float ambientStrength = 0.2;
+    float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor.xyz;
 
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightColor.xyz - FragPos);
+    vec3 lightDir = normalize(lightPos.xyz - FragPos);
 
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * lightColor.xyz;
 
-    vec3 result = (diffuse + ambient) * Color.xyz;
-    //FragColor = vec4(result, 1.0);
-    //FragColor = vec4(Color, 1.0);
-
-    // TODO: FragPos is not being set yet
-
-    FragColor = vec4(FragPos, 1.0);
+    vec3 result = (ambient + diffuse) * Color.xyz;
+    FragColor = vec4(result, 1.0);
 }

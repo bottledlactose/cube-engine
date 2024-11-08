@@ -11,6 +11,5 @@ layout (binding = 0, set = 1) uniform UBO {
 };
 
 void main() {
-    outColor = Color;
     gl_Position = mvp * vec4(Position, 1);
 }

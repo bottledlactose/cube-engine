@@ -52,11 +52,8 @@ public:
     void DestroyMesh(MeshHandle *inMesh) const;
 
     // Temporary helper functions
-
-    void DrawCube(SDL_GPUCommandBuffer *command_buffer, SDL_GPURenderPass *render_pass, MeshHandle *mesh, glm::mat4 vertex_uniform, glm::vec4 fragment_uniform[2]) const {
-
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 1);
-        SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 2);
+ 
+    void DrawCube(SDL_GPUCommandBuffer *command_buffer, SDL_GPURenderPass *render_pass, MeshHandle *mesh) const {
 
         SDL_GPUBufferBinding vertex_buffer_binding = {
             .buffer = mesh->vertex_buffer,

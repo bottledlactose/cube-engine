@@ -194,14 +194,23 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             //     mvp
             // };
 
-            glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+            //glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+
+            glm::mat4 vertex_uniform[3] = {
+                projection_matrix,
+                view_matrix,
+                model_matrix,
+            };
 
             glm::vec4 fragment_uniform[] = {
                 glm::vec4(light_color, 1.0f),
                 glm::vec4(light_position, 1.0f)
             };
 
-            RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle, mvp, fragment_uniform);
+            SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 3);
+            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 2);
+
+            RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle);
         }
 
         // Draw light sources
