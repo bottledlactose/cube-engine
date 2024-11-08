@@ -37,26 +37,13 @@ bool PhysicsService::Initialize() {
     mPhysicsSystem.SetBodyActivationListener(&mBodyActivationListener);
     mPhysicsSystem.SetContactListener(&mContactListener);
 
-    JPH::BodyInterface &body_interface = mPhysicsSystem.GetBodyInterface();
-
-    // Create a dynamic body to bounce on the floor
-    JPH::BodyCreationSettings sphere_settings(new JPH::SphereShape(0.5f), JPH::RVec3(0.0, 2.0, 0.0), JPH::Quat::sIdentity(), JPH::EMotionType::Dynamic, Layers::MOVING);
-    mSphereID = body_interface.CreateAndAddBody(sphere_settings, JPH::EActivation::Activate);
-
-    body_interface.SetLinearVelocity(mSphereID, JPH::Vec3(0.0f, -1.0f, 0.0f));
-
-    mPhysicsSystem.OptimizeBroadPhase();
+    // TODO: Move this to some function for when a scene is fully loaded
+    //mPhysicsSystem.OptimizeBroadPhase();
 
     return true;
 }
 
 void PhysicsService::Shutdown() {
-
-    JPH::BodyInterface &body_interface = mPhysicsSystem.GetBodyInterface();
-
-    body_interface.RemoveBody(mSphereID);
-    body_interface.DestroyBody(mSphereID);
-
     JPH::UnregisterTypes();
 
     delete JPH::Factory::sInstance;

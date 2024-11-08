@@ -98,6 +98,7 @@ static PositionNormalColorVertex vertices[36] = {
 };
 
 static JPH::BodyID floor_id;
+static JPH::BodyID sphere_id;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
@@ -122,22 +123,20 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
 
     floor_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
+    sphere_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, 2.0f, 0.0f), JPH::Vec3(1.0f, 1.0f, 1.0f), true);
+
+    // Hack to just get the box to fall
+    PhysicsService::Get().GetBodyInterface().SetLinearVelocity(sphere_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
 
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-    // Physics testing
-    JPH::BodyInterface &body_interface = PhysicsService::Get().GetBodyInterface();
 
-    JPH::BodyID sphere_id = PhysicsService::Get().GetSphereID();
-    //JPH::BodyID floor_id = PhysicsService::Get().GetFloorID();
+    JPH::BodyInterface &body_interface = PhysicsService::Get().GetBodyInterface();
 
     JPH::RVec3 position = body_interface.GetCenterOfMassPosition(sphere_id);
 	JPH::Vec3 velocity = body_interface.GetLinearVelocity(sphere_id);
-
-    //printf("Step %d: Position = (%f, %f, %f), Velocity = (%f, %f, %f)\n", step, position.GetX(), position.GetY(), position.GetZ(), velocity.GetX(), velocity.GetY(), velocity.GetZ());
-    //++step;
 
     PhysicsService::Get().Update();
 
@@ -201,6 +200,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+    PhysicsService::Get().DestroyBody(sphere_id);
     PhysicsService::Get().DestroyBody(floor_id);
 
     RenderService::Get().DestroyDepthStencil(depth_texture);

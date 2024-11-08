@@ -190,9 +190,6 @@ private:
     MyBodyActivationListener mBodyActivationListener;
     MyContactListener mContactListener;
 
-    // Testing hardcoded objects
-    JPH::BodyID mSphereID;
-
 public:
     bool Initialize();
     void Shutdown();
@@ -204,9 +201,5 @@ public:
 
     inline JPH::BodyInterface &GetBodyInterface() {
         return mPhysicsSystem.GetBodyInterface();
-    }
-
-    inline JPH::BodyID GetSphereID() const {
-        return mSphereID;
     }
 };
