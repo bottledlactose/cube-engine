@@ -55,7 +55,7 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
             {
                 "shaders/basic_triangle.frag.spv",
                 SDL_GPU_SHADERSTAGE_FRAGMENT,
-                0, 0, 0, 0
+                0, 1, 0, 0
             }
         },
         {
@@ -174,9 +174,9 @@ bool RenderService::CreatePipeline(const eastl::string &inName, SDL_GPUShader *i
         {
             .location = 2,
             .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
             .offset = sizeof(float) * 6
-        }
+        }  
     };
 
     SDL_GPUGraphicsPipelineCreateInfo pipeline_create_info = {

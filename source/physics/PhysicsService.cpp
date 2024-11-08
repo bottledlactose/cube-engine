@@ -34,8 +34,8 @@ bool PhysicsService::Initialize() {
     mPhysicsSystem.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, mBroadPhaseLayerInterface, mObjectVsBroadPhaseLayerFilter, mObjectLayerPairFilter);
 
     // Set listeneres... just testing for now
-    mPhysicsSystem.SetBodyActivationListener(&mBodyActivationListener);
-    mPhysicsSystem.SetContactListener(&mContactListener);
+    //mPhysicsSystem.SetBodyActivationListener(&mBodyActivationListener);
+    //mPhysicsSystem.SetContactListener(&mContactListener);
 
     // TODO: Move this to some function for when a scene is fully loaded
     //mPhysicsSystem.OptimizeBroadPhase();
