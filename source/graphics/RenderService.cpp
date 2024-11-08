@@ -27,17 +27,17 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
     }
 
     // TODO: Make shader loading easier
-    SDL_GPUShader *vertex_shader = Context::Get().LoadShader(
-        SDL_GPU_SHADERSTAGE_VERTEX,
+    SDL_GPUShader *vertex_shader = Context::Get().GetContent().LoadShader(
         "shaders/basic_triangle.vert.spv",
+        SDL_GPU_SHADERSTAGE_VERTEX,
         0, 1, 0, 0);
     if (vertex_shader == nullptr) {
         return false;
     }
 
-    SDL_GPUShader *fragment_shader = Context::Get().LoadShader(
-        SDL_GPU_SHADERSTAGE_FRAGMENT,
+    SDL_GPUShader *fragment_shader = Context::Get().GetContent().LoadShader(
         "shaders/basic_triangle.frag.spv",
+        SDL_GPU_SHADERSTAGE_FRAGMENT,
         0, 0, 0, 0);
     if (fragment_shader == nullptr) {
         return false;
@@ -45,8 +45,8 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
 
     CreateDefaultPipeline(vertex_shader, fragment_shader);
 
-    SDL_ReleaseGPUShader(mDevice, vertex_shader);
-    SDL_ReleaseGPUShader(mDevice, fragment_shader);
+    Context::Get().GetContent().UnloadShader("shaders/basic_triangle.vert.spv");
+    Context::Get().GetContent().UnloadShader("shaders/basic_triangle.frag.spv");
 
     return true;
 }
@@ -173,7 +173,9 @@ SDL_GPUShader *RenderService::CreateShader(
 }
 
 void RenderService::DestroyShader(SDL_GPUShader *inShader) const {
-
+    if (inShader != nullptr) {
+        SDL_ReleaseGPUShader(mDevice, inShader);
+    }
 }
 
 SDL_GPUTexture *RenderService::CreateDepthStencil(u32 inWidth, u32 inHeight) {

@@ -42,32 +42,3 @@ void Context::Shutdown() {
 
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
-
-SDL_GPUShader *Context::LoadShader(
-    SDL_GPUShaderStage stage,
-    const std::string &path,
-    Uint32 sampler_count,
-    Uint32 uniform_buffer_count,
-    Uint32 storage_buffer_count,
-    Uint32 storage_texture_count
-) {
-    size_t code_size;
-    void *code = SDL_LoadFile((GetBasePath() + path).c_str(), &code_size);
-    if (code == nullptr) {
-        LOG_ERROR("Unable to load shader file: %s", SDL_GetError());
-        return nullptr;
-    }
-
-    SDL_GPUShader *shader = RenderService::Get().CreateShader(
-        stage,
-        (const Uint8 *)code,
-        code_size,
-        sampler_count,
-        uniform_buffer_count,
-        storage_buffer_count,
-        storage_texture_count
-    );
-
-    SDL_free(code);
-    return shader;
-}
