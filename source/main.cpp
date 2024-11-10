@@ -36,7 +36,6 @@ void* __cdecl operator new[](size_t size, size_t alignment, size_t alignmentOffs
 #include <EASTL/vector.h>
 
 static MeshHandle *mesh_handle = nullptr;
-static SDL_GPUTexture *depth_texture = nullptr;
 
 static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
@@ -114,12 +113,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     projection_matrix = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
     view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // TODO: Handle window resizing
-    depth_texture = RenderService::Get().CreateDepthStencil(1280, 720);
-    if (depth_texture == nullptr) {
-        return SDL_APP_FAILURE;
-    }
-
     mesh_handle = RenderService::Get().CreateMesh(vertices, sizeof(PositionNormalColorVertex) * 36, nullptr, 0);
     if (mesh_handle == nullptr) {
         return SDL_APP_FAILURE;
@@ -157,11 +150,24 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     if (swapchain_texture != nullptr) {
         SDL_GPURenderPass *render_pass;
         SDL_GPUColorTargetInfo color_target_info;
+
         SDL_zero(color_target_info);
-        color_target_info.texture = swapchain_texture;
         color_target_info.clear_color = {0.1f, 0.1f, 0.1f, 1.0f};
-        color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
-        color_target_info.store_op = SDL_GPU_STOREOP_STORE;
+
+        // TODO: Implement better way to check if MSAA is active
+        if (RenderService::Get().GetMSAATexture() != nullptr && RenderService::Get().GetResolveTexture() != nullptr) {
+            color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
+            color_target_info.store_op = SDL_GPU_STOREOP_RESOLVE;
+            color_target_info.texture = RenderService::Get().GetMSAATexture();
+            color_target_info.resolve_texture = RenderService::Get().GetResolveTexture();
+            color_target_info.cycle = true;
+            color_target_info.cycle_resolve_texture = true;
+        } else {
+            color_target_info.texture = swapchain_texture;
+            //color_target_info.clear_color = {0.1f, 0.1f, 0.1f, 1.0f};
+            color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
+            color_target_info.store_op = SDL_GPU_STOREOP_STORE;
+        }
 
         SDL_GPUDepthStencilTargetInfo depth_stencil_target_info;
         SDL_zero(depth_stencil_target_info);
@@ -170,11 +176,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         depth_stencil_target_info.store_op = SDL_GPU_STOREOP_DONT_CARE;
         depth_stencil_target_info.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
         depth_stencil_target_info.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
-        depth_stencil_target_info.texture = depth_texture;
+        depth_stencil_target_info.texture = RenderService::Get().GetDepthTexture();
         depth_stencil_target_info.cycle = true;
 
         render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
-
+        
         RenderService::Get().UsePipeline(render_pass, "default_mesh");
 
         for (const JPH::BodyID &body_id : bodies) {
@@ -186,15 +192,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             glm::mat4 model_matrix = glm::mat4(1.0f);
             model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
             model_matrix *= glm::mat4_cast(glm_rotation);
-
-            // glm::mat4 vertex_uniform[3] = {
-            //     //projection_matrix,
-            //     //view_matrix,
-            //     //model_matrix
-            //     mvp
-            // };
-
-            //glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
 
             glm::mat4 vertex_uniform[3] = {
                 projection_matrix,
@@ -224,6 +221,24 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
 
         SDL_EndGPURenderPass(render_pass);
+
+        if (RenderService::Get().GetMSAATexture() != nullptr) {
+            SDL_GPUBlitInfo blit_info;
+            SDL_zero(blit_info);
+
+            blit_info.source.texture = RenderService::Get().GetResolveTexture();
+            blit_info.source.w = 1270;
+            blit_info.source.h = 720;
+
+            blit_info.destination.texture = swapchain_texture;
+            blit_info.destination.w = 1270;
+            blit_info.destination.h = 720;
+
+            blit_info.load_op = SDL_GPU_LOADOP_DONT_CARE;
+            blit_info.filter = SDL_GPU_FILTER_LINEAR;
+
+            SDL_BlitGPUTexture(command_buffer, &blit_info);
+        }
     }
 
     SDL_SubmitGPUCommandBuffer(command_buffer);
@@ -249,7 +264,6 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 
     PhysicsService::Get().DestroyBody(floor_id);
 
-    RenderService::Get().DestroyDepthStencil(depth_texture);
     RenderService::Get().DestroyMesh(mesh_handle);
 
     Context::Get().Shutdown();

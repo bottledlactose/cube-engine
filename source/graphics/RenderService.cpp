@@ -44,6 +44,24 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
         return false;
     }
 
+    // Determine the renderer's sample count
+    mSampleCount = SDL_GPU_SAMPLECOUNT_1;
+    if (SDL_GPUTextureSupportsSampleCount(
+        mDevice,
+        SDL_GetGPUSwapchainTextureFormat(mDevice, mWindow),
+        SDL_GPU_SAMPLECOUNT_4)) {
+        mSampleCount = SDL_GPU_SAMPLECOUNT_4;
+    }
+
+    mDepthTexture = CreateDepthTexture(1280, 720);
+    if (mDepthTexture == nullptr) {
+        return false;
+    }
+
+    // We don't need to error check these because MSAA is optional
+    mMSAATexture = CreateMSAATexture(1280, 720);
+    mResolveTexture = CreateResolveTexture(1280, 720);
+
     eastl::vector<PipelineCreateInfo> pipeline_info = {
         {
             "default_mesh",
@@ -130,6 +148,9 @@ void RenderService::UsePipeline(SDL_GPURenderPass *inRenderPass, const eastl::st
 }
 
 void RenderService::Shutdown() {
+    SDL_ReleaseGPUTexture(mDevice, mDepthTexture);
+    SDL_ReleaseGPUTexture(mDevice, mMSAATexture);
+    SDL_ReleaseGPUTexture(mDevice, mResolveTexture);
 
     for (auto &pair : mPipelines) {
         SDL_ReleaseGPUGraphicsPipeline(mDevice, pair.second);
@@ -189,6 +210,9 @@ bool RenderService::CreatePipeline(const eastl::string &inName, SDL_GPUShader *i
             .num_vertex_attributes = 3,
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .multisample_state = {
+            .sample_count = mSampleCount
+        },
         .depth_stencil_state = {
             .compare_op = SDL_GPU_COMPAREOP_LESS,
             .enable_depth_test = true,
@@ -249,11 +273,65 @@ void RenderService::DestroyShader(SDL_GPUShader *inShader) const {
     }
 }
 
-SDL_GPUTexture *RenderService::CreateDepthStencil(u32 inWidth, u32 inHeight) {
+SDL_GPUTexture *RenderService::CreateDepthTexture(u32 inWidth, u32 inHeight) {
     SDL_GPUTextureCreateInfo create_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
         .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+        .width = inWidth,
+        .height = inHeight,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+        .sample_count = mSampleCount,
+    };
+
+    SDL_GPUTexture *texture = SDL_CreateGPUTexture(mDevice, &create_info);
+    if (texture == nullptr) {
+        LOG_ERROR("Unable to create depth texture: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    return texture;
+}
+
+SDL_GPUTexture *RenderService::CreateMSAATexture(u32 inWidth, u32 inHeight) {
+
+    if (mSampleCount == SDL_GPU_SAMPLECOUNT_1) {
+        LOG_INFO("MSAA not supported");
+        return nullptr;
+    }
+
+    SDL_GPUTextureCreateInfo create_info = {
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GetGPUSwapchainTextureFormat(mDevice, Context::Get().GetWindow()),
+        .usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+        .width = inWidth,
+        .height = inHeight,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+        .sample_count = mSampleCount,
+    };
+
+    SDL_GPUTexture *texture = SDL_CreateGPUTexture(mDevice, &create_info);
+    if (texture == nullptr) {
+        LOG_ERROR("Unable to create MSAA texture: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    return texture;
+}
+
+SDL_GPUTexture *RenderService::CreateResolveTexture(u32 inWidth, u32 inHeight) {
+
+    if (mSampleCount == SDL_GPU_SAMPLECOUNT_1) {
+        LOG_INFO("MSAA not supported");
+        return nullptr;
+    }
+
+    SDL_GPUTextureCreateInfo create_info = {
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GetGPUSwapchainTextureFormat(mDevice, Context::Get().GetWindow()),
+        .usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,
         .width = inWidth,
         .height = inHeight,
         .layer_count_or_depth = 1,
@@ -263,14 +341,14 @@ SDL_GPUTexture *RenderService::CreateDepthStencil(u32 inWidth, u32 inHeight) {
 
     SDL_GPUTexture *texture = SDL_CreateGPUTexture(mDevice, &create_info);
     if (texture == nullptr) {
-        fprintf(stderr, "Unable to create depth texture: %s", SDL_GetError());
+        LOG_ERROR("Unable to create resolve texture: %s", SDL_GetError());
         return nullptr;
     }
 
     return texture;
 }
 
-void RenderService::DestroyDepthStencil(SDL_GPUTexture *depth_texture) const {
+void RenderService::DestroyTexture(SDL_GPUTexture *depth_texture) const {
     if (depth_texture != nullptr) {
         SDL_ReleaseGPUTexture(mDevice, depth_texture);
     }

@@ -17,6 +17,14 @@ private:
     SDL_GPUDevice *mDevice;
     SDL_Window *mWindow;
 
+    // Start Render State
+    SDL_GPUSampleCount mSampleCount;
+
+    SDL_GPUTexture *mDepthTexture;
+    SDL_GPUTexture *mMSAATexture;
+    SDL_GPUTexture *mResolveTexture;
+    // End Render State
+
     eastl::unordered_map<eastl::string, SDL_GPUGraphicsPipeline *> mPipelines;
 
 public:
@@ -42,8 +50,10 @@ public:
     ) const;
     void DestroyShader(SDL_GPUShader *inShader) const;
 
-    SDL_GPUTexture *CreateDepthStencil(u32 inWidth, u32 inHeight);
-    void DestroyDepthStencil(SDL_GPUTexture *inDepthStencil) const;
+    SDL_GPUTexture *CreateDepthTexture(u32 inWidth, u32 inHeight);
+    SDL_GPUTexture *CreateMSAATexture(u32 inWidth, u32 inHeight);
+    SDL_GPUTexture *CreateResolveTexture(u32 inWidth, u32 inHeight);
+    void DestroyTexture(SDL_GPUTexture *inTexture) const;
 
     MeshHandle *CreateMesh(
         void *inVertexData, u32 inVertexSize,
@@ -75,5 +85,17 @@ public:
 
     inline SDL_GPUDevice *GetDevice() const {
         return mDevice;
+    }
+
+    inline SDL_GPUTexture *GetDepthTexture() const {
+        return mDepthTexture;
+    }
+
+    inline SDL_GPUTexture *GetMSAATexture() const {
+        return mMSAATexture;
+    }
+
+    inline SDL_GPUTexture *GetResolveTexture() const {
+        return mResolveTexture;
     }
 };
