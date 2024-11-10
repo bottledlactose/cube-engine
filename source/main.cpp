@@ -193,10 +193,13 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
             model_matrix *= glm::mat4_cast(glm_rotation);
 
-            glm::mat4 vertex_uniform[3] = {
+            glm::mat4 model_inverse_transpose = glm::transpose(glm::inverse(model_matrix));
+
+            glm::mat4 vertex_uniform[4] = {
                 projection_matrix,
                 view_matrix,
                 model_matrix,
+                model_inverse_transpose,
             };
 
             glm::vec4 fragment_uniform[] = {
@@ -204,7 +207,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 glm::vec4(light_position, 1.0f)
             };
 
-            SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 3);
+            SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
             SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 2);
 
             RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle);

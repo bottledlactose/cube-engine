@@ -12,11 +12,11 @@ layout (binding = 0, set = 1) uniform UBO {
     mat4x4 projection;
     mat4x4 view;
     mat4x4 model;
+    mat4x4 model_inverse_transpose;
 };
 
 void main() {
-    // TODO: Move invverse transpose to the CPU?
-    outNormal = mat3(transpose(inverse(model))) * Normal;  
+    outNormal = mat3(model_inverse_transpose) * Normal;  
     outFragPos = vec3(model * vec4(Position, 1.0));
     outColor = Color;
     gl_Position = projection * view * model * vec4(Position, 1);
