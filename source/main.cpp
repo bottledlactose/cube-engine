@@ -203,12 +203,13 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             };
 
             glm::vec4 fragment_uniform[] = {
-                glm::vec4(light_color, 1.0f),
-                glm::vec4(light_position, 1.0f)
+                glm::vec4(light_color, 1.0f), // lightColor
+                glm::vec4(light_position, 1.0f), // lightPos
+                glm::vec4(0.0f, 0.0f, 5.0f, 1.0f) // viewPos
             };
 
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
-            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 2);
+            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 3);
 
             RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle);
         }
