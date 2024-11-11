@@ -203,13 +203,26 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             };
 
             glm::vec4 fragment_uniform[] = {
-                glm::vec4(light_color, 1.0f), // lightColor
-                glm::vec4(light_position, 1.0f), // lightPos
-                glm::vec4(0.0f, 0.0f, 5.0f, 1.0f) // viewPos
+                //glm::vec4(light_color, 1.0f), // lightColor
+                //glm::vec4(light_position, 1.0f), // lightPos
+                glm::vec4(0.0f, 0.0f, 5.0f, 1.0f), // viewPos
+
+                // material
+                glm::vec4(1.0f, 0.5f, 0.31f, 1.0f), // ambient
+                glm::vec4(1.0f, 0.5f, 0.31f, 1.0f), // diffuse
+                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), // specular
+                glm::vec4(32.0f, 32.0f, 32.0f, 1.0f), // shininess + padding
+
+                // light
+                glm::vec4(light_position, 1.0f), // position
+                glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), // ambient
+                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), // diffuse
+                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), // specular
             };
 
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
-            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 3);
+            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 9);
+            //SDL_PushGPUFragmentUniformData(command_buffer, 1, &material_uniform, sizeof(glm::vec4) * 4);
 
             RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle);
         }
