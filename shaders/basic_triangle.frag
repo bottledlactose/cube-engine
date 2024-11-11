@@ -5,6 +5,9 @@ struct Material {
     vec4 diffuse;
     vec4 specular;
     float shininess;
+    float _padding1;
+    float _padding2;
+    float _padding3;
 };
 
 struct Light {
@@ -21,11 +24,8 @@ layout (location = 2) in vec3 Normal;
 layout (location = 0) out vec4 FragColor;
 
 layout (binding = 0, set = 3) uniform UBO {
-    //vec4 lightColor;
-    //vec4 lightPos;
     vec4 viewPos;
     Material material;
-    vec3 _padding; // padding needed to align the struct to a vec4
     Light light;
 };
 
@@ -45,6 +45,6 @@ void main() {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     vec3 specular = light.specular.xyz * (spec * material.specular.xyz);
 
-    vec3 result = (ambient + diffuse + specular) * Color.xyz;
+    vec3 result = (ambient + diffuse + specular);
     FragColor = vec4(result, 1.0);
 }

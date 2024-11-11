@@ -43,6 +43,27 @@ static glm::mat4 view_matrix = glm::mat4(1.0f);
 static glm::vec3 light_position = glm::vec3(-1.0f, 1.0f, 1.2f);
 static glm::vec3 light_color = glm::vec3(1.0f, 1.0f, 1.0f);
 
+struct Material {
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+    float shininess;
+};
+
+struct Light {
+    glm::vec4 position;
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+};
+
+struct FragmentUniform {
+    glm::vec4 camera_position;
+    Material material;
+    glm::vec3 _padding1;
+    Light light;
+};
+
 static eastl::vector<JPH::Vec3> box_positions = {
     JPH::Vec3(0.0f, 0.0f, 0.0f),
     JPH::Vec3(1.0f, 0.0f, 0.0f),
@@ -202,27 +223,28 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 model_inverse_transpose,
             };
 
-            glm::vec4 fragment_uniform[] = {
-                //glm::vec4(light_color, 1.0f), // lightColor
-                //glm::vec4(light_position, 1.0f), // lightPos
-                glm::vec4(0.0f, 0.0f, 5.0f, 1.0f), // viewPos
-
-                // material
-                glm::vec4(1.0f, 0.5f, 0.31f, 1.0f), // ambient
-                glm::vec4(1.0f, 0.5f, 0.31f, 1.0f), // diffuse
-                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), // specular
-                glm::vec4(32.0f, 32.0f, 32.0f, 1.0f), // shininess + padding
-
-                // light
-                glm::vec4(light_position, 1.0f), // position
-                glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), // ambient
-                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), // diffuse
-                glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), // specular
+            FragmentUniform fragment_uniform = {
+                glm::vec4(0.0f, 0.0f, 5.0f, 1.0f),
+                {
+                    glm::vec4(1.0f, 0.5f, 0.31f, 1.0f),
+                    glm::vec4(1.0f, 0.5f, 0.31f, 1.0f),
+                    glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                    32.0f
+                },
+                glm::vec3(0.0f),
+                {
+                    glm::vec4(light_position, 1.0f),
+                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                    glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                    glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                }
             };
 
+            // print size of fragment uniform
+            printf("size of fragment uniform: %d\n", sizeof(FragmentUniform));
+
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
-            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(glm::vec4) * 9);
-            //SDL_PushGPUFragmentUniformData(command_buffer, 1, &material_uniform, sizeof(glm::vec4) * 4);
+            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(FragmentUniform));
 
             RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle);
         }
