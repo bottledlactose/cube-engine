@@ -40,9 +40,6 @@ static MeshHandle *mesh_handle = nullptr;
 static glm::mat4 projection_matrix = glm::mat4(1.0f);
 static glm::mat4 view_matrix = glm::mat4(1.0f);
 
-static glm::vec3 light_position = glm::vec3(-1.0f, 1.0f, 1.2f);
-static glm::vec3 light_color = glm::vec3(1.0f, 1.0f, 1.0f);
-
 struct Material {
     glm::vec4 ambient;
     glm::vec4 diffuse;
@@ -50,8 +47,19 @@ struct Material {
     glm::vec4 shininess;
 };
 
-struct Light {
+struct DirectionalLight {
+    glm::vec4 direction;
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+};
+
+struct PointLight {
     glm::vec4 position;
+    float constant;
+    float linear;
+    float quadratic;
+    float _padding;
     glm::vec4 ambient;
     glm::vec4 diffuse;
     glm::vec4 specular;
@@ -60,7 +68,8 @@ struct Light {
 struct FragmentUniform {
     glm::vec4 camera_position;
     Material material;
-    Light light;
+    DirectionalLight directional_light;
+    PointLight point_light[4];
 };
 
 static eastl::vector<JPH::Vec3> box_positions = {
@@ -119,6 +128,12 @@ static PositionNormalColorVertex vertices[] = {
     { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f }
 };
 
+static eastl::vector<glm::vec3> light_positions = {
+    glm::vec3(0.7f, 0.2f, 2.0f),
+    glm::vec3(2.3f, -3.3f, -4.0f),
+    glm::vec3(-4.0f, 2.0f, -12.0f),
+    glm::vec3(0.0f, 0.0f, -3.0f)
+};
 
 static JPH::BodyID floor_id;
 
@@ -231,10 +246,52 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                     glm::vec4(32.0f)
                 },
                 {
-                    glm::vec4(light_position, 1.0f),
+                    glm::vec4(-0.2f, -1.0f, -0.3f, 1.0f),
                     glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
                     glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
                     glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                },
+                {
+                    {
+                        glm::vec4(light_positions[0], 1.0f),
+                        1.0f,
+                        0.09f,
+                        0.032f,
+                        0.0f,
+                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                    },
+                    {
+                        glm::vec4(light_positions[1], 1.0f),
+                        1.0f,
+                        0.09f,
+                        0.032f,
+                        0.0f,
+                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                    },
+                    {
+                        glm::vec4(light_positions[2], 1.0f),
+                        1.0f,
+                        0.09f,
+                        0.032f,
+                        0.0f,
+                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                    },
+                    {
+                        glm::vec4(light_positions[3], 1.0f),
+                        1.0f,
+                        0.09f,
+                        0.032f,
+                        0.0f,
+                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                    }
                 }
             };
 
@@ -247,12 +304,14 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         // Draw light sources
         RenderService::Get().UsePipeline(render_pass, "light_source");
 
-        glm::mat4 model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::translate(model_matrix, light_position);
-        model_matrix = glm::scale(model_matrix, glm::vec3(0.1f, 0.1f, 0.1f));
-        glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+        for (const glm::vec3 &light_position : light_positions) {
+            glm::mat4 model_matrix = glm::mat4(1.0f);
+            model_matrix = glm::translate(model_matrix, light_position);
+            model_matrix = glm::scale(model_matrix, glm::vec3(0.1f, 0.1f, 0.1f));
+            glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
 
-        RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
+            RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
+        }
 
         SDL_EndGPURenderPass(render_pass);
 
