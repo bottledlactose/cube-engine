@@ -47,7 +47,7 @@ struct Material {
     glm::vec4 ambient;
     glm::vec4 diffuse;
     glm::vec4 specular;
-    float shininess;
+    glm::vec4 shininess;
 };
 
 struct Light {
@@ -60,7 +60,6 @@ struct Light {
 struct FragmentUniform {
     glm::vec4 camera_position;
     Material material;
-    glm::vec3 _padding1;
     Light light;
 };
 
@@ -226,12 +225,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             FragmentUniform fragment_uniform = {
                 glm::vec4(0.0f, 0.0f, 5.0f, 1.0f),
                 {
-                    glm::vec4(1.0f, 0.5f, 0.31f, 1.0f),
-                    glm::vec4(1.0f, 0.5f, 0.31f, 1.0f),
-                    glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                    32.0f
+                    glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
+                    glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
+                    glm::vec4(0.5f, 0.5f, 0.5f, 0.0f),
+                    glm::vec4(32.0f)
                 },
-                glm::vec3(0.0f),
                 {
                     glm::vec4(light_position, 1.0f),
                     glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
@@ -239,9 +237,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                     glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
                 }
             };
-
-            // print size of fragment uniform
-            printf("size of fragment uniform: %d\n", sizeof(FragmentUniform));
 
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
             SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(FragmentUniform));
