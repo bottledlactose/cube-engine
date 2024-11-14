@@ -25,6 +25,12 @@ file(GLOB_RECURSE SOURCES
 
 add_executable(boomblox ${SOURCES})
 
+# Check if we are using MSVC and set warning flags accordingly
+if (MSVC)
+    # Enable all level 4 warnings
+    target_compile_options(boomblox PRIVATE /W4)
+endif()
+
 target_link_libraries(boomblox PRIVATE SDL3-static EASTL Jolt)
 target_include_directories(boomblox PRIVATE
     source
