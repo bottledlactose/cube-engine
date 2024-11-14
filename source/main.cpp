@@ -19,20 +19,11 @@
 #include "physics/PhysicsService.hpp"
 #include "Camera.hpp"
 
-// TODO: Clean up these weird definitions for EASTL
+#define _EASTL_DEFINE_OPERATOR_IMPL(...) void *__cdecl operator new[](__VA_ARGS__) { return new uint8_t[size]; }
 
-// testing
-void* __cdecl operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
-{
-	return new uint8_t[size];
-}
-
-// testing even more
-void* __cdecl operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* file, int line, unsigned int debugFlags, const char* name, int flags) {
-    // Implement a simple aligned memory allocation if needed
-    // For simplicity, assuming default alignment
-    return ::operator new(size);
-}
+// One-time definitions of operator new[] for EASTL
+_EASTL_DEFINE_OPERATOR_IMPL(size_t size, const char*, int, unsigned, const char*, int)
+_EASTL_DEFINE_OPERATOR_IMPL(size_t size, size_t, size_t, const char*, int, unsigned int, const char*, int)
 
 #include <EASTL/vector.h>
 
