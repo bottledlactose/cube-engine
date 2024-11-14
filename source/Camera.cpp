@@ -58,11 +58,7 @@ const glm::mat4 &Camera::GetProjectionMatrix() {
 
 const glm::mat4 &Camera::GetViewMatrix() {
     if (mIsViewDirty) {
-
-
         glm::vec3 position = GetPosition();
-
-
         mViewMatrix = glm::lookAt(position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         mIsViewDirty = false;
     }

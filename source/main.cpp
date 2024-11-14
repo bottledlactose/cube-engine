@@ -362,6 +362,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
                 isRightMouseButtonDown = false;
             }
             break;
+        case SDL_EVENT_MOUSE_WHEEL:
+            camera.SetDistance(camera.GetDistance() - event->wheel.y);
+            break;
     }
 
     return SDL_APP_CONTINUE;
