@@ -17,6 +17,7 @@
 #include "Context.hpp"
 #include "graphics/RenderService.hpp"
 #include "physics/PhysicsService.hpp"
+#include "Camera.hpp"
 
 // TODO: Clean up these weird definitions for EASTL
 
@@ -36,9 +37,6 @@ void* __cdecl operator new[](size_t size, size_t alignment, size_t alignmentOffs
 #include <EASTL/vector.h>
 
 static MeshHandle *mesh_handle = nullptr;
-
-static glm::mat4 projection_matrix = glm::mat4(1.0f);
-static glm::mat4 view_matrix = glm::mat4(1.0f);
 
 struct Material {
     glm::vec4 ambient;
@@ -129,24 +127,21 @@ static PositionNormalColorVertex vertices[] = {
 };
 
 static eastl::vector<glm::vec3> light_positions = {
-    glm::vec3(0.7f, 0.2f, 2.0f),
-    glm::vec3(-0.7f, 0.2f, 2.0f),
-    glm::vec3(0.7f, 0.2f, -2.0f),
-    glm::vec3(-0.7f, 0.2f, -2.0f)
+    glm::vec3(2.0f, 0.2f, 2.0f),
+    glm::vec3(-2.0f, 0.2f, 2.0f),
+    glm::vec3(2.0f, 0.2f, -2.0f),
+    glm::vec3(-2.0f, 0.2f, -2.0f)
 };
 
 static JPH::BodyID floor_id;
+
+static Camera camera(45.0f, 0.0f, 0.0f, 5.0f);
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     if (!Context::Get().Initialize({ "boomblox", 1270, 720 })) {
         return SDL_APP_FAILURE;
     }
-
-    // testing only, move to camera class
-    // TODO: Handle window resizing
-    projection_matrix = glm::perspective(glm::radians(45.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-    view_matrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     mesh_handle = RenderService::Get().CreateMesh(vertices, sizeof(PositionNormalColorVertex) * 36, nullptr, 0);
     if (mesh_handle == nullptr) {
@@ -231,8 +226,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             glm::mat4 model_inverse_transpose = glm::transpose(glm::inverse(model_matrix));
 
             glm::mat4 vertex_uniform[4] = {
-                projection_matrix,
-                view_matrix,
+                camera.GetProjectionMatrix(),
+                camera.GetViewMatrix(),
                 model_matrix,
                 model_inverse_transpose,
             };
@@ -308,7 +303,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             glm::mat4 model_matrix = glm::mat4(1.0f);
             model_matrix = glm::translate(model_matrix, light_position);
             model_matrix = glm::scale(model_matrix, glm::vec3(0.1f, 0.1f, 0.1f));
-            glm::mat4 mvp = projection_matrix * view_matrix * model_matrix;
+            glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * model_matrix;
 
             RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
         }
@@ -341,9 +336,32 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     return SDL_APP_CONTINUE;
 }
 
+// tesing
+static bool isRightMouseButtonDown = false;
+
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-    if (event->type == SDL_EVENT_QUIT) {
-        return SDL_APP_SUCCESS;
+
+    switch (event->type) {
+        case SDL_EVENT_QUIT:
+            return SDL_APP_SUCCESS;
+        case SDL_EVENT_MOUSE_MOTION:
+
+            if (isRightMouseButtonDown) {
+                camera.SetYaw(camera.GetYaw() + event->motion.xrel);
+                camera.SetPitch(camera.GetPitch() + event->motion.yrel);
+            }
+
+            break;
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            if (event->button.button == SDL_BUTTON_RIGHT) {
+                isRightMouseButtonDown = true;
+            }
+            break;
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+            if (event->button.button == SDL_BUTTON_RIGHT) {
+                isRightMouseButtonDown = false;
+            }
+            break;
     }
 
     return SDL_APP_CONTINUE;
