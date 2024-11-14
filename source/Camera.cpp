@@ -39,6 +39,14 @@ void Camera::SetDistance(float inDistance) {
     mIsViewDirty = true;
 }
 
+const glm::vec3 &Camera::GetPosition() {
+    return glm::vec3(
+        mDistance * cos(glm::radians(mPitch)) * cos(glm::radians(mYaw)),
+        mDistance * sin(glm::radians(mPitch)),
+        mDistance * cos(glm::radians(mPitch)) * sin(glm::radians(mYaw))
+    );
+}
+
 const glm::mat4 &Camera::GetProjectionMatrix() {
     if (mIsProjectionDirty) {
         mProjectionMatrix = glm::perspective(glm::radians(mFov), 1280.0f / 720.0f, 0.1f, 100.0f);
@@ -50,11 +58,10 @@ const glm::mat4 &Camera::GetProjectionMatrix() {
 
 const glm::mat4 &Camera::GetViewMatrix() {
     if (mIsViewDirty) {
-        glm::vec3 position = glm::vec3(
-            mDistance * cos(glm::radians(mPitch)) * cos(glm::radians(mYaw)),
-            mDistance * sin(glm::radians(mPitch)),
-            mDistance * cos(glm::radians(mPitch)) * sin(glm::radians(mYaw))
-        );
+
+
+        glm::vec3 position = GetPosition();
+
 
         mViewMatrix = glm::lookAt(position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         mIsViewDirty = false;

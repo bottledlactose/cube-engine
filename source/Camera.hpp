@@ -30,6 +30,7 @@ public:
     inline float GetYaw() const { return mYaw; }
     inline float GetDistance() const { return mDistance; }
 
+    const glm::vec3 &GetPosition();
     const glm::mat4 &GetProjectionMatrix();
     const glm::mat4 &GetViewMatrix();
 };

@@ -233,18 +233,18 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             };
 
             FragmentUniform fragment_uniform = {
-                glm::vec4(0.0f, 0.0f, 5.0f, 1.0f),
+                glm::vec4(camera.GetPosition(), 1.0f),
                 {
                     glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
                     glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
                     glm::vec4(0.5f, 0.5f, 0.5f, 0.0f),
-                    glm::vec4(32.0f)
+                    glm::vec4(8.0f)
                 },
                 {
                     glm::vec4(-0.2f, -1.0f, -0.3f, 1.0f),
                     glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
                     glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                    glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                    glm::vec4(0.8f, 0.8f, 0.8f, 1.0f)
                 },
                 {
                     {
@@ -254,8 +254,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                         0.032f,
                         0.0f,
                         glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
                     },
                     {
                         glm::vec4(light_positions[1], 1.0f),
@@ -264,8 +264,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                         0.032f,
                         0.0f,
                         glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
                     },
                     {
                         glm::vec4(light_positions[2], 1.0f),
@@ -274,8 +274,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                         0.032f,
                         0.0f,
                         glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
                     },
                     {
                         glm::vec4(light_positions[3], 1.0f),
@@ -284,8 +284,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                         0.032f,
                         0.0f,
                         glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
+                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
                     }
                 }
             };
@@ -302,7 +302,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         for (const glm::vec3 &light_position : light_positions) {
             glm::mat4 model_matrix = glm::mat4(1.0f);
             model_matrix = glm::translate(model_matrix, light_position);
-            model_matrix = glm::scale(model_matrix, glm::vec3(0.1f, 0.1f, 0.1f));
+            model_matrix = glm::scale(model_matrix, glm::vec3(0.2f));
             glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * model_matrix;
 
             RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
