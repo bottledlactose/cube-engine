@@ -1,19 +1,24 @@
 cmake_minimum_required(VERSION 3.5)
 project(boomblox LANGUAGES CXX VERSION 0.1.0)
 
+# Set the C++ standard to C++20 and make it required
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Configure SDL library build options use use the static version of SDL
 set(SDL_SHARED OFF CACHE BOOL "")
 set(SDL_STATIC ON CACHE BOOL "")
 
+# Add SDL as a dependency
 add_subdirectory(thirdparty/sdl)
 
+# Add EASTL (EA Standard Template Library) as a dependency
 add_subdirectory(thirdparty/eastl)
 
-# Jolt Physics
+# Add Jolt Physics as a dependency
 add_subdirectory(thirdparty/jolt/Build)
 
+# Collect all .cpp and .hpp files from specific directories
 file(GLOB_RECURSE SOURCES
     source/*.cpp
     source/*.hpp
@@ -23,6 +28,7 @@ file(GLOB_RECURSE SOURCES
     source/macros/*.hpp
 )
 
+# Define the executable target using the collected source files
 add_executable(boomblox ${SOURCES})
 
 # Check if we are using MSVC and set warning flags accordingly
@@ -31,7 +37,10 @@ if (MSVC)
     target_compile_options(boomblox PRIVATE /W4)
 endif()
 
+# Link the executable target with the required libraries
 target_link_libraries(boomblox PRIVATE SDL3-static EASTL Jolt)
+
+# Add include directories to the executable target
 target_include_directories(boomblox PRIVATE
     source
     thirdparty/sdl/include
