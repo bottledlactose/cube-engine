@@ -18,6 +18,9 @@ add_subdirectory(thirdparty/eastl)
 # Add Jolt Physics as a dependency
 add_subdirectory(thirdparty/jolt/Build)
 
+# Add Assimp as a dependency
+add_subdirectory(thirdparty/assimp)
+
 # Collect all .cpp and .hpp files from specific directories
 file(GLOB_RECURSE SOURCES
     source/*.cpp
@@ -38,7 +41,7 @@ if (MSVC)
 endif()
 
 # Link the executable target with the required libraries
-target_link_libraries(boomblox PRIVATE SDL3-static EASTL Jolt)
+target_link_libraries(boomblox PRIVATE SDL3-static EASTL Jolt assimp)
 
 # Add include directories to the executable target
 target_include_directories(boomblox PRIVATE
@@ -49,4 +52,5 @@ target_include_directories(boomblox PRIVATE
     thirdparty/eabase/include/Common
     thirdparty/eastl/include
     thirdparty/jolt
+    thirdparty/assimp/include
 )

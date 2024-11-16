@@ -16,3 +16,6 @@
 [submodule "thirdparty/jolt"]
 	path = thirdparty/jolt
 	url = https://github.com/jrouwe/JoltPhysics.git
+[submodule "thirdparty/assimp"]
+	path = thirdparty/assimp
+	url = https://github.com/assimp/assimp.git

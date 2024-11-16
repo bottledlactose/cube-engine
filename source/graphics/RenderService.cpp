@@ -122,7 +122,6 @@ void RenderService::UsePipeline(SDL_GPURenderPass *inRenderPass, const eastl::st
 
     auto it = mPipelines.find(inName);
     if (it == mPipelines.end()) {
-        //fprintf(stderr, "Pipeline not found: %s", inName.c_str());
         LOG_ERROR("Pipeline not found: %s", inName.c_str());
         return;
     }
@@ -338,8 +337,8 @@ void RenderService::DestroyTexture(SDL_GPUTexture *depth_texture) const {
 }
 
 MeshHandle *RenderService::CreateMesh(
-    void *inVertexData, u32 inVertexSize,
-    void *inIndexData, u32 inIndexSize
+    void *inVertexData, u32 inVertexSize, u32 inVertextCount,
+    void *inIndexData, u32 inIndexSize, u32 inIndexCount
 ) const {
     MeshHandle *mesh = (MeshHandle *)SDL_malloc(sizeof(MeshHandle));
     if (mesh == nullptr) {
@@ -347,25 +346,39 @@ MeshHandle *RenderService::CreateMesh(
         return nullptr;
     }
 
-    mesh->vertex_size = inVertexSize;
+    mesh->mVertexSize = inVertexSize;
+    mesh->mVertexCount = inVertextCount;
 
-    SDL_GPUBufferCreateInfo buffer_create_info = {
+    mesh->mIndexSize = inIndexSize;
+    mesh->mIndexCount = inIndexCount;
+
+    SDL_GPUBufferCreateInfo vertex_buffer_create_info = {
         .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
         .size = inVertexSize
     };
 
-    mesh->vertex_buffer = SDL_CreateGPUBuffer(mDevice, &buffer_create_info);
-    if (mesh->vertex_buffer == nullptr) {
+    mesh->mVertexBuffer = SDL_CreateGPUBuffer(mDevice, &vertex_buffer_create_info);
+    if (mesh->mVertexBuffer == nullptr) {
         fprintf(stderr, "Unable to create vertex buffer: %s", SDL_GetError());
         DestroyMesh(mesh);
         return nullptr;
     }
 
-    // TODO: Handle index buffer creation
+    SDL_GPUBufferCreateInfo index_buffer_create_info = {
+        .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+        .size = inIndexSize
+    };
+
+    mesh->mIndexBuffer = SDL_CreateGPUBuffer(mDevice, &index_buffer_create_info);
+    if (mesh->mIndexBuffer == nullptr) {
+        fprintf(stderr, "Unable to create index buffer: %s", SDL_GetError());
+        DestroyMesh(mesh);
+        return nullptr;
+    }
 
     SDL_GPUTransferBufferCreateInfo transfer_buffer_create_info = {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = inVertexSize
+        .size = inVertexSize + inIndexSize
     };
 
     SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(mDevice, &transfer_buffer_create_info);
@@ -384,23 +397,38 @@ MeshHandle *RenderService::CreateMesh(
     }
 
     SDL_memcpy(transfer_data, inVertexData, inVertexSize);
+    SDL_memcpy((Uint8 *)transfer_data + inVertexSize, inIndexData, inIndexSize);
+
     SDL_UnmapGPUTransferBuffer(mDevice, transfer_buffer);
 
     SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(mDevice);
     SDL_GPUCopyPass *copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 
-    SDL_GPUTransferBufferLocation transfer_buffer_location = {
+    SDL_GPUTransferBufferLocation vertex_transfer_buffer_location = {
         .transfer_buffer = transfer_buffer,
         .offset = 0
     };
 
-    SDL_GPUBufferRegion buffer_region = {
-        .buffer = mesh->vertex_buffer,
+    SDL_GPUBufferRegion vertex_buffer_region = {
+        .buffer = mesh->mVertexBuffer,
         .offset = 0,
         .size = inVertexSize
     };
 
-    SDL_UploadToGPUBuffer(copy_pass, &transfer_buffer_location, &buffer_region, false);
+    SDL_UploadToGPUBuffer(copy_pass, &vertex_transfer_buffer_location, &vertex_buffer_region, false);
+
+    SDL_GPUTransferBufferLocation index_transfer_buffer_location = {
+        .transfer_buffer = transfer_buffer,
+        .offset = inVertexSize
+    };
+
+    SDL_GPUBufferRegion index_buffer_region = {
+        .buffer = mesh->mIndexBuffer,
+        .offset = 0,
+        .size = inIndexSize
+    };
+
+    SDL_UploadToGPUBuffer(copy_pass, &index_transfer_buffer_location, &index_buffer_region, false);
 
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(command_buffer);
@@ -411,8 +439,12 @@ MeshHandle *RenderService::CreateMesh(
 
 void RenderService::DestroyMesh(MeshHandle *inMesh) const {
     if (inMesh != nullptr) {
-        if (inMesh->vertex_buffer != nullptr) {
-            SDL_ReleaseGPUBuffer(mDevice, inMesh->vertex_buffer);
+        if (inMesh->mVertexBuffer != nullptr) {
+            SDL_ReleaseGPUBuffer(mDevice, inMesh->mVertexBuffer);
+        }
+
+        if (inMesh->mIndexBuffer != nullptr) {
+            SDL_ReleaseGPUBuffer(mDevice, inMesh->mIndexBuffer);
         }
 
         SDL_free(inMesh);

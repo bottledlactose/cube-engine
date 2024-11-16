@@ -19,6 +19,10 @@
 #include "physics/PhysicsService.hpp"
 #include "Camera.hpp"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #define _EASTL_DEFINE_OPERATOR_IMPL(...) void *__cdecl operator new[](__VA_ARGS__) { return new uint8_t[size]; }
 
 // One-time definitions of operator new[] for EASTL
@@ -73,49 +77,49 @@ static eastl::vector<JPH::Vec3> box_positions = {
 
 static eastl::vector<JPH::BodyID> bodies;
 
-static PositionNormalColorVertex vertices[] = {
-    { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
+// static PositionNormalColorVertex vertices[] = {
+//     { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
 
-    { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
 
-    { -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
 
-    {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
 
-    { -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
 
-    { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-    { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f }
-};
+//     { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
+//     { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f }
+// };
 
 static eastl::vector<glm::vec3> light_positions = {
     glm::vec3(2.0f, 0.2f, 2.0f),
@@ -129,16 +133,91 @@ static JPH::BodyID ball_id;
 
 static Camera camera(45.0f, 0.0f, -90.0f, 5.0f);
 
+// test mesh data
+struct MeshData {
+    eastl::vector<PositionNormalColorVertex> vertices;
+    eastl::vector<Uint16> indices;
+};
+
+static MeshData AssimpProcessMesh(const aiMesh *mesh, const aiScene *scene) {
+    eastl::vector<PositionNormalColorVertex> vertices;
+    eastl::vector<Uint16> indices;
+
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        PositionNormalColorVertex vertex;
+
+        vertex.x = mesh->mVertices[i].x;
+        vertex.y = mesh->mVertices[i].y;
+        vertex.z = mesh->mVertices[i].z;
+
+        vertex.nx = mesh->mNormals[i].x;
+        vertex.ny = mesh->mNormals[i].y;
+        vertex.nz = mesh->mNormals[i].z;
+
+        if (mesh->mColors[0]) {
+            vertex.r = mesh->mColors[0][i].r;
+            vertex.g = mesh->mColors[0][i].g;
+            vertex.b = mesh->mColors[0][i].b;
+        } else {
+            vertex.r = 1.0f;
+            vertex.g = 1.0f;
+            vertex.b = 1.0f;
+        }
+
+        vertices.push_back(vertex);
+    }
+
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+            indices.push_back(face.mIndices[j]);
+        }
+    }
+
+    return {
+        .vertices = vertices,
+        .indices = indices
+    };
+}
+
+static MeshData AssimpProcessNode(const aiNode *node, const aiScene *scene) {
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        MeshData data = AssimpProcessMesh(mesh, scene);
+
+        return data; // only process the first mesh for now
+    }
+
+    for (unsigned int i = 0; i < node->mNumChildren; i++) {
+        return AssimpProcessNode(node->mChildren[i], scene);
+    }
+}
+
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     if (!Context::Get().Initialize({ "boomblox", 1270, 720 })) {
         return SDL_APP_FAILURE;
     }
 
-    mesh_handle = RenderService::Get().CreateMesh(vertices, sizeof(PositionNormalColorVertex) * 36, nullptr, 0);
-    if (mesh_handle == nullptr) {
+    // TEST ASSIMP
+    Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile("../../content/cube.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        fprintf(stderr, "ERROR::ASSIMP::%s\n", importer.GetErrorString());
         return SDL_APP_FAILURE;
     }
+
+    MeshData mesh_data = AssimpProcessNode(scene->mRootNode, scene);
+
+    // Create a mesh from the data
+    mesh_handle = RenderService::Get().CreateMesh(
+        mesh_data.vertices.data(),
+        sizeof(PositionNormalColorVertex) * mesh_data.vertices.size(),
+        mesh_data.vertices.size(),
+        mesh_data.indices.data(),
+        sizeof(Uint16) * mesh_data.indices.size(),
+        mesh_data.indices.size()
+    );
 
     floor_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
 
@@ -289,7 +368,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
             SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(FragmentUniform));
 
-            RenderService::Get().DrawCube(command_buffer, render_pass, mesh_handle);
+            RenderService::Get().DrawCube(render_pass, mesh_handle);
         }
 
         // Draw light sources
