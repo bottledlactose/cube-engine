@@ -3,3 +3,7 @@
 
 # Exclude CMake build directory
 build/
+
+# Exclude compiled header files
+shaders/*.h
+shaders/*.spv

@@ -13,6 +13,13 @@
 
 #include <SDL_gpu_shadercross.h>
 
+// testing
+#include "shaders/basic_triangle.vert.h"
+#include "shaders/basic_triangle.frag.h"
+
+#include "shaders/light_source.vert.h"
+#include "shaders/light_source.frag.h"
+
 // Testing
 struct ShaderCreateInfo {
     const eastl::string &mPath;
@@ -62,67 +69,43 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
     mMSAATexture = CreateMSAATexture(1280, 720);
     mResolveTexture = CreateResolveTexture(1280, 720);
 
-    eastl::vector<PipelineCreateInfo> pipeline_info = {
-        {
-            "default_mesh",
-            {
-                "shaders/basic_triangle.vert.spv",
-                SDL_GPU_SHADERSTAGE_VERTEX,
-                0, 1, 0, 0
-            },
-            {
-                "shaders/basic_triangle.frag.spv",
-                SDL_GPU_SHADERSTAGE_FRAGMENT,
-                0, 1, 0, 0
-            }
-        },
-        {
-            "light_source",
-            {
-                "shaders/light_source.vert.spv",
-                SDL_GPU_SHADERSTAGE_VERTEX,
-                0, 1, 0, 0
-            },
-            {
-                "shaders/light_source.frag.spv",
-                SDL_GPU_SHADERSTAGE_FRAGMENT,
-                0, 0, 0, 0
-            }
-        }
-    };
+    SDL_GPUShader *basic_triangle_vert = RenderService::Get().CreateShader(
+        SDL_GPU_SHADERSTAGE_VERTEX,
+        (const Uint8 *)BASIC_TRIANGLE_VERT_SHADER,
+        BASIC_TRIANGLE_VERT_SHADER_LEN,
+        0, 1, 0, 0
+    );
 
-    for (auto &info : pipeline_info) {
-        //PipelineCreateInfo &info = pair.second;
+    SDL_GPUShader *basic_triangle_frag = RenderService::Get().CreateShader(
+        SDL_GPU_SHADERSTAGE_FRAGMENT,
+        (const Uint8 *)BASIC_TRIANGLE_FRAG_SHADER,
+        BASIC_TRIANGLE_FRAG_SHADER_LEN,
+        0, 1, 0, 0
+    );
 
-        SDL_GPUShader *vertex_shader = Context::Get().GetContent().LoadShader(
-            info.mVertexShader.mPath,
-            info.mVertexShader.mStage,
-            info.mVertexShader.mSamplerCount,
-            info.mVertexShader.mUniformBufferCount,
-            info.mVertexShader.mStorageBufferCount,
-            info.mVertexShader.mStorageTextureCount
-        );
-        if (vertex_shader == nullptr) {
-            return false;
-        }
+    CreatePipeline("default_mesh", basic_triangle_vert, basic_triangle_frag);
 
-        SDL_GPUShader *fragment_shader = Context::Get().GetContent().LoadShader(
-            info.mFragmentShader.mPath,
-            info.mFragmentShader.mStage,
-            info.mFragmentShader.mSamplerCount,
-            info.mFragmentShader.mUniformBufferCount,
-            info.mFragmentShader.mStorageBufferCount,
-            info.mFragmentShader.mStorageTextureCount
-        );
-        if (fragment_shader == nullptr) {
-            return false;
-        }
+    SDL_ReleaseGPUShader(mDevice, basic_triangle_vert);
+    SDL_ReleaseGPUShader(mDevice, basic_triangle_frag);
 
-        CreatePipeline(info.mName, vertex_shader, fragment_shader);
+    SDL_GPUShader *light_source_vert = RenderService::Get().CreateShader(
+        SDL_GPU_SHADERSTAGE_VERTEX,
+        (const Uint8 *)LIGHT_SOURCE_VERT_SHADER,
+        LIGHT_SOURCE_VERT_SHADER_LEN,
+        0, 1, 0, 0
+    );
 
-        Context::Get().GetContent().UnloadShader(info.mVertexShader.mPath);
-        Context::Get().GetContent().UnloadShader(info.mFragmentShader.mPath);
-    }
+    SDL_GPUShader *light_source_frag = RenderService::Get().CreateShader(
+        SDL_GPU_SHADERSTAGE_FRAGMENT,
+        (const Uint8 *)LIGHT_SOURCE_FRAG_SHADER,
+        LIGHT_SOURCE_FRAG_SHADER_LEN,
+        0, 0, 0, 0
+    );
+
+    CreatePipeline("light_source", light_source_vert, light_source_frag);
+
+    SDL_ReleaseGPUShader(mDevice, light_source_vert);
+    SDL_ReleaseGPUShader(mDevice, light_source_frag);
 
     return true;
 }
