@@ -78,6 +78,21 @@ JPH::BodyID PhysicsService::CreateBox(const JPH::Vec3 &inPosition, const JPH::Ve
     return body_id;
 }
 
+JPH::BodyID PhysicsService::CreateBall(const JPH::Vec3 &inPosition, const float inSize) {
+    JPH::BodyInterface &body_interface = mPhysicsSystem.GetBodyInterface();
+
+    JPH::SphereShapeSettings ball_shape_settings(inSize);
+    ball_shape_settings.SetEmbedded();
+
+    JPH::ShapeSettings::ShapeResult ball_shape_result = ball_shape_settings.Create();
+    JPH::ShapeRefC ball_shape = ball_shape_result.Get();
+
+    JPH::BodyCreationSettings ball_settings(ball_shape, inPosition, JPH::Quat::sIdentity(), JPH::EMotionType::Dynamic, Layers::MOVING);
+    JPH::BodyID body_id = body_interface.CreateAndAddBody(ball_settings, JPH::EActivation::DontActivate);
+
+    return body_id;
+}
+
 void PhysicsService::DestroyBody(JPH::BodyID inBodyID) {
     JPH::BodyInterface &body_interface = mPhysicsSystem.GetBodyInterface();
     body_interface.RemoveBody(inBodyID);

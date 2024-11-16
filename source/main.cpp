@@ -125,8 +125,9 @@ static eastl::vector<glm::vec3> light_positions = {
 };
 
 static JPH::BodyID floor_id;
+static JPH::BodyID ball_id;
 
-static Camera camera(45.0f, 0.0f, 0.0f, 5.0f);
+static Camera camera(45.0f, 0.0f, -90.0f, 5.0f);
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
@@ -140,6 +141,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     }
 
     floor_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
+
+    ball_id = PhysicsService::Get().CreateBall(JPH::Vec3(-5.0f, 0.0f, 0.0f), 0.5f);
+    // Throw the ball towards the blocks
+    PhysicsService::Get().GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(20.0f, 0.0f, 0.0f));
 
     for (const JPH::Vec3 &position : box_positions) {
         JPH::BodyID box_id = PhysicsService::Get().CreateBox(position, JPH::Vec3(0.5f, 0.5f, 0.5f), true);
@@ -298,6 +303,23 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
             RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
         }
+
+        // BALL POSITION TESTING
+        // Draw ball as a cube
+        JPH::Vec3 ball_position = body_interface.GetCenterOfMassPosition(ball_id);
+        JPH::Quat ball_rotation = body_interface.GetRotation(ball_id);
+
+        glm::quat glm_ball_rotation = glm::quat(ball_rotation.GetW(), ball_rotation.GetX(), ball_rotation.GetY(), ball_rotation.GetZ());
+
+        glm::mat4 ball_model_matrix = glm::mat4(1.0f);
+        ball_model_matrix = glm::translate(ball_model_matrix, glm::vec3(ball_position.GetX(), ball_position.GetY(), ball_position.GetZ()));
+        ball_model_matrix *= glm::mat4_cast(glm_ball_rotation);
+        ball_model_matrix = glm::scale(ball_model_matrix, glm::vec3(0.2f));
+
+        glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * ball_model_matrix;
+
+        RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
+
 
         SDL_EndGPURenderPass(render_pass);
 

@@ -195,6 +195,7 @@ public:
     void Shutdown();
     
     JPH::BodyID CreateBox(const JPH::Vec3 &inPosition, const JPH::Vec3 &inSize, bool inIsDynamic = false);
+	JPH::BodyID CreateBall(const JPH::Vec3 &inPosition, const float inSize);
     void DestroyBody(JPH::BodyID inBodyID);
 
     void Update();
