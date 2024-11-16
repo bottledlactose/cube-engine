@@ -60,39 +60,7 @@ public:
         void *inIndexData, u32 inIndexSize, u32 inIndexCount
     ) const;
     void DestroyMesh(MeshHandle *inMesh) const;
-
-    // Temporary helper functions
- 
-    void DrawCube(SDL_GPURenderPass *render_pass, MeshHandle *mesh) const {
-
-        SDL_GPUBufferBinding vertex_buffer_binding = {
-            .buffer = mesh->mVertexBuffer,
-            .offset = 0
-        };
-        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
-
-        if (mesh->mIndexBuffer == nullptr) {
-            SDL_DrawGPUPrimitives(render_pass, mesh->mVertexSize, 1, 0, 0);
-        } else {
-            SDL_GPUBufferBinding index_buffer_binding = {
-                .buffer = mesh->mIndexBuffer,
-                .offset = 0
-            };
-
-            SDL_BindGPUIndexBuffer(render_pass, &index_buffer_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-            SDL_DrawGPUIndexedPrimitives(render_pass, mesh->mIndexCount, 1, 0, 0, 0);
-        }
-    }
-
-    void DrawLight(SDL_GPUCommandBuffer *command_buffer, SDL_GPURenderPass *render_pass, MeshHandle *mesh, glm::mat4 mvp) const {
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
-        SDL_GPUBufferBinding vertex_buffer_binding = {
-            .buffer = mesh->mVertexBuffer,
-            .offset = 0
-        };
-        SDL_BindGPUVertexBuffers(render_pass, 0, &vertex_buffer_binding, 1);
-        SDL_DrawGPUPrimitives(render_pass, mesh->mVertexSize, 1, 0, 0);
-    }
+    void DrawMesh(SDL_GPURenderPass *inRenderPass, MeshHandle *inMesh) const;
 
     inline SDL_GPUDevice *GetDevice() const {
         return mDevice;

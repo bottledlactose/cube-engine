@@ -368,7 +368,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
             SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(FragmentUniform));
 
-            RenderService::Get().DrawCube(render_pass, mesh_handle);
+            RenderService::Get().DrawMesh(render_pass, mesh_handle);
         }
 
         // Draw light sources
@@ -380,7 +380,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             model_matrix = glm::scale(model_matrix, glm::vec3(0.2f));
             glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * model_matrix;
 
-            RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
+            SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
+            RenderService::Get().DrawMesh(render_pass, mesh_handle);
         }
 
         // BALL POSITION TESTING
@@ -397,8 +398,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
         glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * ball_model_matrix;
 
-        RenderService::Get().DrawLight(command_buffer, render_pass, mesh_handle, mvp);
-
+        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
+        RenderService::Get().DrawMesh(render_pass, mesh_handle);
 
         SDL_EndGPURenderPass(render_pass);
 

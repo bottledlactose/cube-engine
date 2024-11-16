@@ -450,3 +450,24 @@ void RenderService::DestroyMesh(MeshHandle *inMesh) const {
         SDL_free(inMesh);
     }
 }
+
+void RenderService::DrawMesh(SDL_GPURenderPass *inRenderPass, MeshHandle *inMesh) const {
+
+    SDL_GPUBufferBinding vertex_buffer_binding = {
+        .buffer = inMesh->mVertexBuffer,
+        .offset = 0
+    };
+    SDL_BindGPUVertexBuffers(inRenderPass, 0, &vertex_buffer_binding, 1);
+
+    if (inMesh->mIndexBuffer == nullptr) {
+        SDL_DrawGPUPrimitives(inRenderPass, inMesh->mVertexSize, 1, 0, 0);
+    } else {
+        SDL_GPUBufferBinding index_buffer_binding = {
+            .buffer = inMesh->mIndexBuffer,
+            .offset = 0
+        };
+
+        SDL_BindGPUIndexBuffer(inRenderPass, &index_buffer_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        SDL_DrawGPUIndexedPrimitives(inRenderPass, inMesh->mIndexCount, 1, 0, 0, 0);
+    }
+}
