@@ -23,11 +23,17 @@ private:
     int mWindowHeight;
     bool mIsWindowResized;
 
+    int mTargetFPS = 60;
+
+    Uint64 mPreviousTime;
+    float mDeltaTime;
+
 public:
     bool Initialize(const ContextCreateInfo &inCreateInfo);
     void Shutdown();
 
-    void Update();
+    void BeginFrame();
+    void EndFrame();
 
     inline SDL_Window *GetWindow() const {
         return mWindow;
@@ -47,6 +53,10 @@ public:
 
     inline bool IsWindowResized() const {
         return mIsWindowResized;
+    }
+
+    inline float GetDeltaTime() const {
+        return mDeltaTime;
     }
 
     inline eastl::string GetBasePath() const {

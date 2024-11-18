@@ -2,6 +2,9 @@
 
 #include <cstdarg>
 
+// testing
+#include "Context.hpp"
+
 static void TraceImpl(const char *inFMT, ...) {
 	va_list list;
 	va_start(list, inFMT);

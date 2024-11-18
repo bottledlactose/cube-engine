@@ -193,7 +193,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
 
-    Context::Get().Update();
+    Context::Get().BeginFrame();
 
     if (Context::Get().IsWindowResized()) {
         // Resize the camera aspect ratio
@@ -389,8 +389,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     }
 
     SDL_SubmitGPUCommandBuffer(command_buffer);
-    // TODO: Properly handle frame timing
-    SDL_Delay(1000 / 60);
+
+    Context::Get().EndFrame();
 
     return SDL_APP_CONTINUE;
 }
