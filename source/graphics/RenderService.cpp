@@ -72,14 +72,14 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
     SDL_GPUShader *basic_triangle_vert = RenderService::Get().CreateShader(
         SDL_GPU_SHADERSTAGE_VERTEX,
         (const Uint8 *)BASIC_TRIANGLE_VERT_SHADER,
-        BASIC_TRIANGLE_VERT_SHADER_LEN,
+        BASIC_TRIANGLE_VERT_SHADER_SIZE,
         0, 1, 0, 0
     );
 
     SDL_GPUShader *basic_triangle_frag = RenderService::Get().CreateShader(
         SDL_GPU_SHADERSTAGE_FRAGMENT,
         (const Uint8 *)BASIC_TRIANGLE_FRAG_SHADER,
-        BASIC_TRIANGLE_FRAG_SHADER_LEN,
+        BASIC_TRIANGLE_FRAG_SHADER_SIZE,
         0, 1, 0, 0
     );
 
@@ -91,14 +91,14 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
     SDL_GPUShader *light_source_vert = RenderService::Get().CreateShader(
         SDL_GPU_SHADERSTAGE_VERTEX,
         (const Uint8 *)LIGHT_SOURCE_VERT_SHADER,
-        LIGHT_SOURCE_VERT_SHADER_LEN,
+        LIGHT_SOURCE_VERT_SHADER_SIZE,
         0, 1, 0, 0
     );
 
     SDL_GPUShader *light_source_frag = RenderService::Get().CreateShader(
         SDL_GPU_SHADERSTAGE_FRAGMENT,
         (const Uint8 *)LIGHT_SOURCE_FRAG_SHADER,
-        LIGHT_SOURCE_FRAG_SHADER_LEN,
+        LIGHT_SOURCE_FRAG_SHADER_SIZE,
         0, 0, 0, 0
     );
 

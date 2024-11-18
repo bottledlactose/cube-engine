@@ -5,6 +5,16 @@ project(boomblox LANGUAGES CXX VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Locate the Python executable (try to find Python3 first, fall back to Python2 if not found)
+find_program(PYTHON_EXECUTABLE NAMES python3 python)
+
+# Check if the Python executable was found
+if(NOT PYTHON_EXECUTABLE)
+    message(FATAL_ERROR "Python executable not found! Please install Python or specify the path manually.")
+else()
+    message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
+endif()
+
 # Configure SDL library build options use use the static version of SDL
 set(SDL_SHARED OFF CACHE BOOL "")
 set(SDL_STATIC ON CACHE BOOL "")
@@ -54,3 +64,18 @@ target_include_directories(boomblox PRIVATE
     thirdparty/jolt
     thirdparty/assimp/include
 )
+
+# Automatically run the Python script to build the shaders
+execute_process(
+    COMMAND ${PYTHON_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-shaders.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders
+        ${CMAKE_CURRENT_SOURCE_DIR}/source/graphics/shaders
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE SHADERS_RESULT
+)
+
+# Check if the Python script was successful
+if(NOT SHADERS_RESULT EQUAL 0)
+    message(FATAL_ERROR "Python script failed with error code: ${SHADERS_RESULT}")
+endif()

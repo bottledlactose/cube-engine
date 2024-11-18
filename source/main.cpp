@@ -210,6 +210,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     MeshData mesh_data = AssimpProcessNode(scene->mRootNode, scene);
 
     // Create a mesh from the data
+    // TODO: Clean up input parameters (separate unit sizes from counts to ease things up)
     mesh_handle = RenderService::Get().CreateMesh(
         mesh_data.vertices.data(),
         sizeof(PositionNormalColorVertex) * mesh_data.vertices.size(),

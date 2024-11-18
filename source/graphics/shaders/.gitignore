@@ -1,2 +1,3 @@
-# Exclude pre-compiled shader header files
+# Exclude pre-compiled shaders
 *.h
+*.spv
