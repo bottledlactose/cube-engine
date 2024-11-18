@@ -31,7 +31,7 @@ public:
     bool Initialize(SDL_Window *inWindow);
     void Shutdown();
 
-    void SetViewport(u32 inWidth, u32 inHeight);
+    void SetViewport(Uint32 inWidth, Uint32 inHeight);
 
     bool CreatePipeline(
         const eastl::string &inName,
@@ -45,21 +45,21 @@ public:
         SDL_GPUShaderStage inStage,
         const Uint8 *inCode,
         size_t inCodeSize,
-        u32 inSamplerCount,
-        u32 inUniformBufferCount,
-        u32 inStorageBufferCount,
-        u32 inStorageTextureCount
+        Uint32 inSamplerCount,
+        Uint32 inUniformBufferCount,
+        Uint32 inStorageBufferCount,
+        Uint32 inStorageTextureCount
     ) const;
     void DestroyShader(SDL_GPUShader *inShader) const;
 
-    SDL_GPUTexture *CreateDepthTexture(u32 inWidth, u32 inHeight);
-    SDL_GPUTexture *CreateMSAATexture(u32 inWidth, u32 inHeight);
-    SDL_GPUTexture *CreateResolveTexture(u32 inWidth, u32 inHeight);
+    SDL_GPUTexture *CreateDepthTexture(Uint32 inWidth, Uint32 inHeight);
+    SDL_GPUTexture *CreateMSAATexture(Uint32 inWidth, Uint32 inHeight);
+    SDL_GPUTexture *CreateResolveTexture(Uint32 inWidth, Uint32 inHeight);
     void DestroyTexture(SDL_GPUTexture *inTexture) const;
 
     MeshHandle *CreateMesh(
-        void *inVertexData, u32 inVertexSize, u32 inVertexCount,
-        void *inIndexData, u32 inIndexSize, u32 inIndexCount
+        void *inVertexData, Uint32 inVertexSize, Uint32 inVertexCount,
+        void *inIndexData, Uint32 inIndexSize, Uint32 inIndexCount
     ) const;
     void DestroyMesh(MeshHandle *inMesh) const;
     void DrawMesh(SDL_GPURenderPass *inRenderPass, MeshHandle *inMesh) const;

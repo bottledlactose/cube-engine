@@ -145,7 +145,7 @@ void RenderService::Shutdown() {
     }
 }
 
-void RenderService::SetViewport(u32 inWidth, u32 inHeight) {
+void RenderService::SetViewport(Uint32 inWidth, Uint32 inHeight) {
     if (mDepthTexture != nullptr) {
         DestroyTexture(mDepthTexture);
         mDepthTexture = CreateDepthTexture(inWidth, inHeight);
@@ -239,10 +239,10 @@ SDL_GPUShader *RenderService::CreateShader(
     SDL_GPUShaderStage inStage,
     const Uint8 *inCode,
     size_t inCodeSize,
-    u32 inSamplerCount,
-    u32 inUniformBufferCount,
-    u32 inStorageBufferCount,
-    u32 inStorageTextureCount
+    Uint32 inSamplerCount,
+    Uint32 inUniformBufferCount,
+    Uint32 inStorageBufferCount,
+    Uint32 inStorageTextureCount
 ) const {
 
     SDL_GPUShaderCreateInfo create_info = {
@@ -272,7 +272,7 @@ void RenderService::DestroyShader(SDL_GPUShader *inShader) const {
     }
 }
 
-SDL_GPUTexture *RenderService::CreateDepthTexture(u32 inWidth, u32 inHeight) {
+SDL_GPUTexture *RenderService::CreateDepthTexture(Uint32 inWidth, Uint32 inHeight) {
     SDL_GPUTextureCreateInfo create_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
@@ -293,7 +293,7 @@ SDL_GPUTexture *RenderService::CreateDepthTexture(u32 inWidth, u32 inHeight) {
     return texture;
 }
 
-SDL_GPUTexture *RenderService::CreateMSAATexture(u32 inWidth, u32 inHeight) {
+SDL_GPUTexture *RenderService::CreateMSAATexture(Uint32 inWidth, Uint32 inHeight) {
 
     if (mSampleCount == SDL_GPU_SAMPLECOUNT_1) {
         LOG_INFO("MSAA not supported");
@@ -320,7 +320,7 @@ SDL_GPUTexture *RenderService::CreateMSAATexture(u32 inWidth, u32 inHeight) {
     return texture;
 }
 
-SDL_GPUTexture *RenderService::CreateResolveTexture(u32 inWidth, u32 inHeight) {
+SDL_GPUTexture *RenderService::CreateResolveTexture(Uint32 inWidth, Uint32 inHeight) {
 
     if (mSampleCount == SDL_GPU_SAMPLECOUNT_1) {
         LOG_INFO("MSAA not supported");
@@ -354,8 +354,8 @@ void RenderService::DestroyTexture(SDL_GPUTexture *depth_texture) const {
 }
 
 MeshHandle *RenderService::CreateMesh(
-    void *inVertexData, u32 inVertexSize, u32 inVertextCount,
-    void *inIndexData, u32 inIndexSize, u32 inIndexCount
+    void *inVertexData, Uint32 inVertexSize, Uint32 inVertextCount,
+    void *inIndexData, Uint32 inIndexSize, Uint32 inIndexCount
 ) const {
     MeshHandle *mesh = (MeshHandle *)SDL_malloc(sizeof(MeshHandle));
     if (mesh == nullptr) {

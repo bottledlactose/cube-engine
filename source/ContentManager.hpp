@@ -1,7 +1,5 @@
 #pragma once
 
-#include "macros/types.hpp"
-
 #include <EASTL/unordered_map.h>
 #include <EASTL/string.h>
 

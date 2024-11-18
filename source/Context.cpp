@@ -45,7 +45,7 @@ void Context::Shutdown() {
 
 void Context::Update() {
     // Update and check window width and height
-    i32 width, height;
+    int width, height;
     SDL_GetWindowSize(mWindow, &width, &height);
 
     if (width != mWindowWidth || height != mWindowHeight) {

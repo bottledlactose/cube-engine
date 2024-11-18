@@ -1,7 +1,6 @@
 #pragma once
 
 #include "macros/singleton.hpp"
-#include "macros/types.hpp"
 
 #include "ContentManager.hpp"
 
@@ -10,8 +9,8 @@
 
 struct ContextCreateInfo {
     const char *mTitle;
-    i32 mWidth;
-    i32 mHeight;
+    int mWidth;
+    int mHeight;
 };
 
 class Context {
@@ -20,8 +19,8 @@ private:
     SDL_Window *mWindow;
     ContentManager mContentManager;
 
-    i32 mWindowWidth;
-    i32 mWindowHeight;
+    int mWindowWidth;
+    int mWindowHeight;
     bool mIsWindowResized;
 
 public:
@@ -38,11 +37,11 @@ public:
         return mContentManager;
     }
 
-    inline i32 GetWindowWidth() const {
+    inline int GetWindowWidth() const {
         return mWindowWidth;
     }
 
-    inline i32 GetWindowHeight() const {
+    inline int GetWindowHeight() const {
         return mWindowHeight;
     }
 
