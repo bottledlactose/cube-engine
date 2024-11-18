@@ -71,9 +71,7 @@ JPH::BodyID PhysicsService::CreateBox(const JPH::Vec3 &inPosition, const JPH::Ve
     JPH::ObjectLayer layer = inIsDynamic ? Layers::MOVING : Layers::NON_MOVING;
 
     JPH::BodyCreationSettings floor_settings(floor_shape, inPosition, JPH::Quat::sIdentity(), motion_type, layer);
-    JPH::Body *floor = body_interface.CreateBody(floor_settings);
 
-    //body_interface.AddBody(floor->GetID(), JPH::EActivation::DontActivate);
     JPH::BodyID body_id = body_interface.CreateAndAddBody(floor_settings, JPH::EActivation::DontActivate);
     return body_id;
 }

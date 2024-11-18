@@ -28,6 +28,15 @@ add_subdirectory(thirdparty/eastl)
 # Add Jolt Physics as a dependency
 add_subdirectory(thirdparty/jolt/Build)
 
+# Configure Assimp to only build the library and not the tools
+# Also disable all the importers and exporters except for certain importers
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "")
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "")
+set(ASSIMP_NO_EXPORT ON CACHE BOOL "")
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "")
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "")
+set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "")
+
 # Add Assimp as a dependency
 add_subdirectory(thirdparty/assimp)
 

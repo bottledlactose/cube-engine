@@ -44,7 +44,7 @@ void Camera::SetDistance(float inDistance) {
     mIsViewDirty = true;
 }
 
-const glm::vec3 &Camera::GetPosition() {
+const glm::vec3 Camera::GetPosition() {
     return glm::vec3(
         mDistance * cos(glm::radians(mPitch)) * cos(glm::radians(mYaw)),
         mDistance * sin(glm::radians(mPitch)),
