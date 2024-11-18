@@ -15,6 +15,11 @@ void Camera::SetFov(float inFov) {
     mIsProjectionDirty = true;
 }
 
+void Camera::SetAspectRatio(float inAspectRatio) {
+    mAspectRatio = inAspectRatio;
+    mIsProjectionDirty = true;
+}
+
 void Camera::SetPitch(float inPitch) {
 
     if (inPitch > 89.0f) {
@@ -49,7 +54,7 @@ const glm::vec3 &Camera::GetPosition() {
 
 const glm::mat4 &Camera::GetProjectionMatrix() {
     if (mIsProjectionDirty) {
-        mProjectionMatrix = glm::perspective(glm::radians(mFov), 1280.0f / 720.0f, 0.1f, 100.0f);
+        mProjectionMatrix = glm::perspective(glm::radians(mFov), mAspectRatio, 0.1f, 100.0f);
         mIsProjectionDirty = false;
     }
 

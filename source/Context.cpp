@@ -13,7 +13,7 @@ bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
     }
 
     // Create the main window for the game
-    mWindow = SDL_CreateWindow(inCreateInfo.mTitle, inCreateInfo.mWidth, inCreateInfo.mHeight, 0);
+    mWindow = SDL_CreateWindow(inCreateInfo.mTitle, inCreateInfo.mWidth, inCreateInfo.mHeight, SDL_WINDOW_RESIZABLE);
     if (mWindow == nullptr) {
         LOG_ERROR("Unable to create window: %s", SDL_GetError());
         return false;
@@ -41,4 +41,18 @@ void Context::Shutdown() {
     }
 
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
+}
+
+void Context::Update() {
+    // Update and check window width and height
+    i32 width, height;
+    SDL_GetWindowSize(mWindow, &width, &height);
+
+    if (width != mWindowWidth || height != mWindowHeight) {
+        mWindowWidth = width;
+        mWindowHeight = height;
+        mIsWindowResized = true;
+    } else {
+        mIsWindowResized = false;
+    }
 }

@@ -145,6 +145,23 @@ void RenderService::Shutdown() {
     }
 }
 
+void RenderService::SetViewport(u32 inWidth, u32 inHeight) {
+    if (mDepthTexture != nullptr) {
+        DestroyTexture(mDepthTexture);
+        mDepthTexture = CreateDepthTexture(inWidth, inHeight);
+    }
+
+    if (mMSAATexture != nullptr) {
+        DestroyTexture(mMSAATexture);
+        mMSAATexture = CreateMSAATexture(inWidth, inHeight);
+    }
+
+    if (mResolveTexture != nullptr) {
+        DestroyTexture(mResolveTexture);
+        mResolveTexture = CreateResolveTexture(inWidth, inHeight);
+    }
+}
+
 bool RenderService::CreatePipeline(const eastl::string &inName, SDL_GPUShader *inVertexShader, SDL_GPUShader *inFragmentShader) {
 
     SDL_GPUColorTargetDescription color_target_description = {

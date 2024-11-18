@@ -31,6 +31,8 @@ public:
     bool Initialize(SDL_Window *inWindow);
     void Shutdown();
 
+    void SetViewport(u32 inWidth, u32 inHeight);
+
     bool CreatePipeline(
         const eastl::string &inName,
         SDL_GPUShader *inVertexShader,

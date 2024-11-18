@@ -77,50 +77,6 @@ static eastl::vector<JPH::Vec3> box_positions = {
 
 static eastl::vector<JPH::BodyID> bodies;
 
-// static PositionNormalColorVertex vertices[] = {
-//     { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.5f, 0.0f },
-
-//     { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.5f, 0.0f },
-
-//     { -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-
-//     {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-
-//     { -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-
-//     { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     {  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f },
-//     { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.5f, 0.0f }
-// };
-
 static eastl::vector<glm::vec3> light_positions = {
     glm::vec3(2.0f, 0.2f, 2.0f),
     glm::vec3(-2.0f, 0.2f, 2.0f),
@@ -236,6 +192,15 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
+
+    Context::Get().Update();
+
+    if (Context::Get().IsWindowResized()) {
+        // Resize the camera aspect ratio
+        camera.SetAspectRatio(Context::Get().GetWindowWidth() / (float)Context::Get().GetWindowHeight());
+        // Resize renderer
+        RenderService::Get().SetViewport(Context::Get().GetWindowWidth(), Context::Get().GetWindowHeight());
+    }
 
     JPH::BodyInterface &body_interface = PhysicsService::Get().GetBodyInterface();
 
@@ -409,12 +374,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             SDL_zero(blit_info);
 
             blit_info.source.texture = RenderService::Get().GetResolveTexture();
-            blit_info.source.w = 1270;
-            blit_info.source.h = 720;
+            blit_info.source.w = Context::Get().GetWindowWidth();
+            blit_info.source.h = Context::Get().GetWindowHeight();
 
             blit_info.destination.texture = swapchain_texture;
-            blit_info.destination.w = 1270;
-            blit_info.destination.h = 720;
+            blit_info.destination.w = Context::Get().GetWindowWidth();
+            blit_info.destination.h = Context::Get().GetWindowHeight();
 
             blit_info.load_op = SDL_GPU_LOADOP_DONT_CARE;
             blit_info.filter = SDL_GPU_FILTER_LINEAR;

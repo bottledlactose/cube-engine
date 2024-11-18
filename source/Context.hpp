@@ -20,9 +20,15 @@ private:
     SDL_Window *mWindow;
     ContentManager mContentManager;
 
+    i32 mWindowWidth;
+    i32 mWindowHeight;
+    bool mIsWindowResized;
+
 public:
     bool Initialize(const ContextCreateInfo &inCreateInfo);
     void Shutdown();
+
+    void Update();
 
     inline SDL_Window *GetWindow() const {
         return mWindow;
@@ -30,6 +36,18 @@ public:
 
     inline ContentManager &GetContent() {
         return mContentManager;
+    }
+
+    inline i32 GetWindowWidth() const {
+        return mWindowWidth;
+    }
+
+    inline i32 GetWindowHeight() const {
+        return mWindowHeight;
+    }
+
+    inline bool IsWindowResized() const {
+        return mIsWindowResized;
     }
 
     inline eastl::string GetBasePath() const {
