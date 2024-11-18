@@ -7,7 +7,7 @@
 #include <cassert>
 
 #include "Context.hpp"
-#include "vertices/PositionNormalColorVertex.hpp"
+#include "vertices/PositionNormalTextureVertex.hpp"
 
 #include <EASTL/vector.h>
 
@@ -170,7 +170,7 @@ bool RenderService::CreatePipeline(const eastl::string &inName, SDL_GPUShader *i
 
     SDL_GPUVertexBufferDescription vertex_buffer_description = {
         .slot = 0,
-        .pitch = sizeof(PositionNormalColorVertex),
+        .pitch = sizeof(PositionNormalTextureVertex),
         .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
         .instance_step_rate = 0,
     };
@@ -194,7 +194,7 @@ bool RenderService::CreatePipeline(const eastl::string &inName, SDL_GPUShader *i
         {
             .location = 2,
             .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
             .offset = sizeof(float) * 6
         }  
     };

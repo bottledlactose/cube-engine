@@ -13,7 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "graphics/vertices/PositionNormalColorVertex.hpp"
+#include "graphics/vertices/PositionNormalTextureVertex.hpp"
 #include "Context.hpp"
 #include "graphics/RenderService.hpp"
 #include "physics/PhysicsService.hpp"
@@ -91,33 +91,30 @@ static Camera camera(45.0f, 0.0f, -90.0f, 5.0f);
 
 // test mesh data
 struct MeshData {
-    eastl::vector<PositionNormalColorVertex> vertices;
+    eastl::vector<PositionNormalTextureVertex> vertices;
     eastl::vector<Uint16> indices;
 };
 
 static MeshData AssimpProcessMesh(const aiMesh *mesh, const aiScene *scene) {
-    eastl::vector<PositionNormalColorVertex> vertices;
+    eastl::vector<PositionNormalTextureVertex> vertices;
     eastl::vector<Uint16> indices;
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        PositionNormalColorVertex vertex;
+        PositionNormalTextureVertex vertex;
 
-        vertex.x = mesh->mVertices[i].x;
-        vertex.y = mesh->mVertices[i].y;
-        vertex.z = mesh->mVertices[i].z;
+        vertex.mPosition.x = mesh->mVertices[i].x;
+        vertex.mPosition.y = mesh->mVertices[i].y;
+        vertex.mPosition.z = mesh->mVertices[i].z;
 
-        vertex.nx = mesh->mNormals[i].x;
-        vertex.ny = mesh->mNormals[i].y;
-        vertex.nz = mesh->mNormals[i].z;
+        vertex.mNormal.x = mesh->mNormals[i].x;
+        vertex.mNormal.y = mesh->mNormals[i].y;
+        vertex.mNormal.z = mesh->mNormals[i].z;
 
-        if (mesh->mColors[0]) {
-            vertex.r = mesh->mColors[0][i].r;
-            vertex.g = mesh->mColors[0][i].g;
-            vertex.b = mesh->mColors[0][i].b;
+        if (mesh->mTextureCoords[0]) {
+            vertex.mTexCoords.x = mesh->mTextureCoords[0][i].x;
+            vertex.mTexCoords.y = mesh->mTextureCoords[0][i].y;
         } else {
-            vertex.r = 1.0f;
-            vertex.g = 1.0f;
-            vertex.b = 1.0f;
+            vertex.mTexCoords = glm::vec2(0.0f, 0.0f);
         }
 
         vertices.push_back(vertex);
@@ -169,7 +166,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     // TODO: Clean up input parameters (separate unit sizes from counts to ease things up)
     mesh_handle = RenderService::Get().CreateMesh(
         mesh_data.vertices.data(),
-        sizeof(PositionNormalColorVertex) * mesh_data.vertices.size(),
+        sizeof(PositionNormalTextureVertex) * mesh_data.vertices.size(),
         mesh_data.vertices.size(),
         mesh_data.indices.data(),
         sizeof(Uint16) * mesh_data.indices.size(),
