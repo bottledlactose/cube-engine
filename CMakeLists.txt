@@ -48,6 +48,16 @@ add_executable(boomblox ${SOURCES})
 if (MSVC)
     # Enable all level 4 warnings
     target_compile_options(boomblox PRIVATE /W4)
+else()
+    # Enable all warnings
+    target_compile_options(boomblox PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+# Check if we are using MSVC and set exception handling flags accordingly
+if (MSVC)
+    target_compile_options(boomblox PRIVATE /EHs-c-)
+else()
+    target_compile_options(boomblox PRIVATE -fno-exceptions)
 endif()
 
 # Link the executable target with the required libraries
