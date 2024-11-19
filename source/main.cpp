@@ -60,7 +60,7 @@ struct PointLight {
 
 struct FragmentUniform {
     glm::vec4 camera_position;
-    Material material;
+    //Material material;
     DirectionalLight directional_light;
     PointLight point_light[4];
 };
@@ -251,6 +251,60 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         
         RenderService::Get().UsePipeline(render_pass, "default_mesh");
 
+        FragmentUniform fragment_uniform = {
+            glm::vec4(camera.GetPosition(), 1.0f),
+            {
+                glm::vec4(-0.2f, -1.0f, -0.3f, 1.0f),
+                glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                glm::vec4(0.8f, 0.8f, 0.8f, 1.0f)
+            },
+            {
+                {
+                    glm::vec4(light_positions[0], 1.0f),
+                    1.0f,
+                    0.09f,
+                    0.032f,
+                    0.0f,
+                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
+                },
+                {
+                    glm::vec4(light_positions[1], 1.0f),
+                    1.0f,
+                    0.09f,
+                    0.032f,
+                    0.0f,
+                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
+                },
+                {
+                    glm::vec4(light_positions[2], 1.0f),
+                    1.0f,
+                    0.09f,
+                    0.032f,
+                    0.0f,
+                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
+                },
+                {
+                    glm::vec4(light_positions[3], 1.0f),
+                    1.0f,
+                    0.09f,
+                    0.032f,
+                    0.0f,
+                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
+                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
+                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
+                }
+            }
+        };
+
+        SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(FragmentUniform));
+
         for (const JPH::BodyID &body_id : bodies) {
             JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);
             JPH::Quat rotation = body_interface.GetRotation(body_id);
@@ -270,66 +324,15 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
                 model_inverse_transpose,
             };
 
-            FragmentUniform fragment_uniform = {
-                glm::vec4(camera.GetPosition(), 1.0f),
-                {
-                    glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
-                    glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
-                    glm::vec4(0.5f, 0.5f, 0.5f, 0.0f),
-                    glm::vec4(8.0f)
-                },
-                {
-                    glm::vec4(-0.2f, -1.0f, -0.3f, 1.0f),
-                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                    glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                    glm::vec4(0.8f, 0.8f, 0.8f, 1.0f)
-                },
-                {
-                    {
-                        glm::vec4(light_positions[0], 1.0f),
-                        1.0f,
-                        0.09f,
-                        0.032f,
-                        0.0f,
-                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                    },
-                    {
-                        glm::vec4(light_positions[1], 1.0f),
-                        1.0f,
-                        0.09f,
-                        0.032f,
-                        0.0f,
-                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                    },
-                    {
-                        glm::vec4(light_positions[2], 1.0f),
-                        1.0f,
-                        0.09f,
-                        0.032f,
-                        0.0f,
-                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                    },
-                    {
-                        glm::vec4(light_positions[3], 1.0f),
-                        1.0f,
-                        0.09f,
-                        0.032f,
-                        0.0f,
-                        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                        glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                        glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                    }
-                }
+            Material material = {
+                glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
+                glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
+                glm::vec4(0.5f, 0.5f, 0.5f, 0.0f),
+                glm::vec4(8.0f)
             };
 
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
-            SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(FragmentUniform));
+            SDL_PushGPUFragmentUniformData(command_buffer, 1, &material, sizeof(Material));
 
             RenderService::Get().DrawMesh(render_pass, mesh_handle);
         }

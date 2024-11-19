@@ -33,11 +33,14 @@ layout (location = 1) in vec3 Normal;
 
 layout (location = 0) out vec4 FragColor;
 
-layout (binding = 0, set = 3) uniform UBO {
+layout (binding = 0, set = 3) uniform SceneBuffer {
     vec4 viewPos;
-    Material material;
     DirectionalLight directional_light;
     PointLight point_lights[4];
+};
+
+layout (binding = 1, set = 3) uniform MaterialBuffer {
+    Material material;
 };
 
 vec3 CalcDirectionalLight(DirectionalLight light, vec3 normal, vec3 viewDir);

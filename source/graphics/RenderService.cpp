@@ -80,7 +80,7 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
         SDL_GPU_SHADERSTAGE_FRAGMENT,
         (const Uint8 *)BASIC_TRIANGLE_FRAG_SHADER,
         BASIC_TRIANGLE_FRAG_SHADER_SIZE,
-        0, 1, 0, 0
+        0, 2, 0, 0
     );
 
     CreatePipeline("default_mesh", basic_triangle_vert, basic_triangle_frag);
