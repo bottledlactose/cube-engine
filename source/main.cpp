@@ -409,6 +409,29 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
+
+
+            // print throw direction
+            if (event->button.button == SDL_BUTTON_LEFT) {
+                glm::vec3 camera_position = camera.GetPosition();
+                glm::vec3 throw_direction = camera.GetThrowDirection(event->button.x, event->button.y, Context::Get().GetWindowWidth(), Context::Get().GetWindowHeight());
+                printf("World position: %f, %f, %f\n", throw_direction.x, throw_direction.y, throw_direction.z);
+
+                // invert throw direction
+                throw_direction = -throw_direction;
+
+                // Spawn a box at the throw direction
+                // remove old ball first
+                PhysicsService::Get().DestroyBody(ball_id);
+                ball_id = PhysicsService::Get().CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
+
+                // Throw the ball towards the blocks
+                PhysicsService::Get().GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(throw_direction.x * 20.0f, throw_direction.y * 20.0f, throw_direction.z * 20.0f));
+
+
+            }
+
+
             if (event->button.button == SDL_BUTTON_RIGHT) {
                 isRightMouseButtonDown = true;
             }

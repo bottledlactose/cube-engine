@@ -10,6 +10,31 @@ Camera::Camera(float inFov, float inPitch, float inYaw, float inDistance) {
     mDistance = inDistance;
 }
 
+glm::vec3 Camera::GetThrowDirection(float inX, float inY, float inWidth, float inHeight) {
+    // Get basis vectors
+    glm::vec3 forward = GetForward();
+    glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), forward));
+    glm::vec3 up = glm::normalize(glm::cross(forward, right));
+
+    // Map screen coordinates to normalized device coordinates (NDC)
+    float normalizedX = (2.0f * inX) / inWidth - 1.0f; // Maps [0, width] to [-1, 1]
+    float normalizedY = 1.0f - (2.0f * inY) / inHeight; // Maps [0, height] to [1, -1]
+
+    // Scale based on FOV and aspect ratio
+    float tanFovY = tan(glm::radians(mFov) / 2.0f);
+    float aspectRatio = inWidth / inHeight;
+    float tanFovX = tanFovY * aspectRatio;
+
+    // Adjust signs for right and up vectors to match screen-space behavior
+    glm::vec3 scaledRight = right * -normalizedX * tanFovX; // Flip horizontal
+    glm::vec3 scaledUp = up * -normalizedY * tanFovY;       // Flip vertical
+
+    // Combine into final direction
+    glm::vec3 direction = glm::normalize(forward + scaledRight + scaledUp);
+
+    return direction;
+}
+
 void Camera::SetFov(float inFov) {
     mFov = inFov;
     mIsProjectionDirty = true;

@@ -21,6 +21,8 @@ public:
     Camera(float inFov, float inPitch, float inYaw, float inDistance);
     virtual ~Camera() = default;
 
+    glm::vec3 GetThrowDirection(float inX, float inY, float inWidth, float inHeight);
+
     void SetFov(float inFov);
     void SetAspectRatio(float inAspectRatio);
     void SetPitch(float inPitch);
