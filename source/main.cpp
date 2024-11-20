@@ -16,7 +16,7 @@
 #include "graphics/vertices/PositionNormalTextureVertex.hpp"
 #include "Context.hpp"
 #include "graphics/RenderService.hpp"
-#include "physics/PhysicsService.hpp"
+#include "physics/PhysicsManager.hpp"
 #include "Camera.hpp"
 
 #define EASTL_DEFINE_OPERATOR_IMPL(...) void *__cdecl operator new[](size_t size, __VA_ARGS__) { return new uint8_t[size]; }
@@ -72,6 +72,7 @@ static eastl::vector<JPH::Vec3> box_positions = {
     JPH::Vec3(0.55f, 5.0f, 0.0f),
 };
 
+static PhysicsManager physics_manager;
 static eastl::vector<JPH::BodyID> bodies;
 
 static eastl::vector<glm::vec3> light_positions = {
@@ -92,15 +93,17 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
+    physics_manager.Initialize();
+
     cube_mesh = Context::Get().GetContent().LoadMesh("content/1x1.glb");
     ball_mesh = Context::Get().GetContent().LoadMesh("content/ball.glb");
 
-    floor_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
-    ball_id = PhysicsService::Get().CreateBall(JPH::Vec3(-5.0f, 0.0f, 0.0f), 0.5f);
+    floor_id = physics_manager.CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
+    ball_id = physics_manager.CreateBall(JPH::Vec3(-5.0f, 0.0f, 0.0f), 0.5f);
 
     for (const JPH::Vec3 &position : box_positions) {
-        JPH::BodyID box_id = PhysicsService::Get().CreateBox(position, JPH::Vec3(0.5f, 0.5f, 0.5f), true);
-        PhysicsService::Get().GetBodyInterface().SetLinearVelocity(box_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
+        JPH::BodyID box_id = physics_manager.CreateBox(position, JPH::Vec3(0.5f, 0.5f, 0.5f), true);
+        physics_manager.GetBodyInterface().SetLinearVelocity(box_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
         bodies.push_back(box_id);
     }
 
@@ -118,9 +121,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         RenderService::Get().SetViewport(Context::Get().GetWindowWidth(), Context::Get().GetWindowHeight());
     }
 
-    JPH::BodyInterface &body_interface = PhysicsService::Get().GetBodyInterface();
-
-    PhysicsService::Get().Update();
+    JPH::BodyInterface &body_interface = physics_manager.GetBodyInterface();
+    physics_manager.Update();
 
     SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(RenderService::Get().GetDevice());
     if (command_buffer == nullptr) {
@@ -344,11 +346,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
                 // Spawn a box at the throw direction
                 // remove old ball first
-                PhysicsService::Get().DestroyBody(ball_id);
-                ball_id = PhysicsService::Get().CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
+                physics_manager.DestroyBody(ball_id);
+                ball_id = physics_manager.CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
 
                 // Throw the ball towards the blocks
-                PhysicsService::Get().GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(throw_direction.x * 20.0f, throw_direction.y * 20.0f, throw_direction.z * 20.0f));
+                physics_manager.GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(throw_direction.x * 20.0f, throw_direction.y * 20.0f, throw_direction.z * 20.0f));
 
 
             }
@@ -374,10 +376,11 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 
     for (const JPH::BodyID &body_id : bodies) {
-        PhysicsService::Get().DestroyBody(body_id);
+        physics_manager.DestroyBody(body_id);
     }
 
-    PhysicsService::Get().DestroyBody(floor_id);
+    physics_manager.DestroyBody(floor_id);
+    physics_manager.Shutdown();
 
     Context::Get().GetContent().Unload();
     Context::Get().Shutdown();

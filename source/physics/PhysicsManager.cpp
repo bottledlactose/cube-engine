@@ -1,4 +1,4 @@
-#include "PhysicsService.hpp"
+#include "PhysicsManager.hpp"
 
 #include <cstdarg>
 
@@ -15,7 +15,7 @@ static void TraceImpl(const char *inFMT, ...) {
     printf("%s\n", buffer);
 }
 
-bool PhysicsService::Initialize() {
+bool PhysicsManager::Initialize() {
 
     JPH::RegisterDefaultAllocator();
 
@@ -46,7 +46,7 @@ bool PhysicsService::Initialize() {
     return true;
 }
 
-void PhysicsService::Shutdown() {
+void PhysicsManager::Shutdown() {
     JPH::UnregisterTypes();
 
     delete JPH::Factory::sInstance;
@@ -59,7 +59,7 @@ void PhysicsService::Shutdown() {
     mJobSystem = nullptr;
 }
 
-JPH::BodyID PhysicsService::CreateBox(const JPH::Vec3 &inPosition, const JPH::Vec3 &inSize, bool inIsDynamic) {
+JPH::BodyID PhysicsManager::CreateBox(const JPH::Vec3 &inPosition, const JPH::Vec3 &inSize, bool inIsDynamic) {
     JPH::BodyInterface &body_interface = mPhysicsSystem.GetBodyInterface();
 
     // Create rigid body to serve as the ground plane
@@ -79,7 +79,7 @@ JPH::BodyID PhysicsService::CreateBox(const JPH::Vec3 &inPosition, const JPH::Ve
     return body_id;
 }
 
-JPH::BodyID PhysicsService::CreateBall(const JPH::Vec3 &inPosition, const float inSize) {
+JPH::BodyID PhysicsManager::CreateBall(const JPH::Vec3 &inPosition, const float inSize) {
     JPH::BodyInterface &body_interface = mPhysicsSystem.GetBodyInterface();
 
     JPH::SphereShapeSettings ball_shape_settings(inSize);
@@ -94,13 +94,13 @@ JPH::BodyID PhysicsService::CreateBall(const JPH::Vec3 &inPosition, const float 
     return body_id;
 }
 
-void PhysicsService::DestroyBody(JPH::BodyID inBodyID) {
+void PhysicsManager::DestroyBody(JPH::BodyID inBodyID) {
     JPH::BodyInterface &body_interface = mPhysicsSystem.GetBodyInterface();
     body_interface.RemoveBody(inBodyID);
     body_interface.DestroyBody(inBodyID);
 }
 
-void PhysicsService::Update() {
+void PhysicsManager::Update() {
     const float cDeltaTime = 1.0f / 60.0f;
     const int cCollisionSteps = 1;
 

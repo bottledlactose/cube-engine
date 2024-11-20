@@ -3,7 +3,6 @@
 #include "macros/log.hpp"
 
 #include "graphics/RenderService.hpp"
-#include "physics/PhysicsService.hpp"
 
 bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
     // Initialize the SDL video subsystem, needed for window creation and rendering
@@ -24,15 +23,10 @@ bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
         return false;
     }
 
-    if (!PhysicsService::Get().Initialize()) {
-        return false;
-    }
-
     return true;
 }
 
 void Context::Shutdown() {
-    PhysicsService::Get().Shutdown();
     RenderService::Get().Shutdown();
 
     if (mWindow != nullptr) {

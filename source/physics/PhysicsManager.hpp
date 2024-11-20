@@ -175,8 +175,7 @@ public:
 	}
 };
 
-class PhysicsService {
-MAKE_SINGLETON(PhysicsService)
+class PhysicsManager {
 private:
     JPH::PhysicsSystem mPhysicsSystem;
 
