@@ -82,10 +82,34 @@ void Scene::Update() {
         );
     }
 
+    // TODO: apply delta time
+    mCamera.SetDistance(mCamera.GetDistance() - InputService::Get().GetScrollY());
+
     if (InputService::Get().IsRightMouseDown()) {
+        glm::vec2 mouse_delta = InputService::Get().GetMouseDelta();
         // TODO: apply delta time
-        mCamera.SetYaw(mCamera.GetYaw() + InputService::Get().GetMouseRelX());
-        mCamera.SetPitch(mCamera.GetPitch() + InputService::Get().GetMouseRelY());
+        mCamera.SetYaw(mCamera.GetYaw() + mouse_delta.x);
+        mCamera.SetPitch(mCamera.GetPitch() + mouse_delta.y);
+    }
+
+    if (InputService::Get().IsLeftMouseDown()) {
+
+        glm::vec3 camera_position = mCamera.GetPosition();
+        glm::vec2 mouse_position = InputService::Get().GetMousePosition();
+
+        glm::vec3 throw_direction = mCamera.GetThrowDirection(
+            mouse_position.x, mouse_position.y,
+            static_cast<float>(Context::Get().GetWindowWidth()),
+            static_cast<float>(Context::Get().GetWindowHeight())
+        );
+        throw_direction = -throw_direction;
+
+        // Spawn a box at the throw direction
+        mPhysicsManager.DestroyBody(mBallID);
+        mBallID = mPhysicsManager.CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
+
+        // Throw the ball towards the blocks
+        mPhysicsManager.GetBodyInterface().AddLinearVelocity(mBallID, JPH::Vec3(throw_direction.x * 20.0f, throw_direction.y * 20.0f, throw_direction.z * 20.0f));
     }
 
     mPhysicsManager.Update();

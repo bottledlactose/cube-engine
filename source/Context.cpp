@@ -60,7 +60,7 @@ void Context::BeginFrame() {
     mPreviousTime = mCurrentTime;
 }
 
-void Context::EndFrame() {    
+void Context::EndFrame() {
     // Update input service
     InputService::Get().Update();
 

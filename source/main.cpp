@@ -68,18 +68,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
         case SDL_EVENT_QUIT:
             return SDL_APP_SUCCESS;
         case SDL_EVENT_MOUSE_MOTION:
-
-
             InputService::Get().SetMousePosition(event->motion.x, event->motion.y);
-            InputService::Get().SetMouseRelativePosition(event->motion.xrel, event->motion.yrel);
-
-            
-
-            // if (isRightMouseButtonDown) {
-            //     camera.SetYaw(camera.GetYaw() + event->motion.xrel);
-            //     camera.SetPitch(camera.GetPitch() + event->motion.yrel);
-            // }
-
+            InputService::Get().SetMouseDelta(event->motion.xrel, event->motion.yrel);
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
             if (event->button.button == SDL_BUTTON_LEFT) {
@@ -89,27 +79,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
             if (event->button.button == SDL_BUTTON_RIGHT) {
                 InputService::Get().SetRightMouseDown(true);
             }
-
-            // // print throw direction
-            // if (event->button.button == SDL_BUTTON_LEFT) {
-            //     glm::vec3 camera_position = camera.GetPosition();
-            //     glm::vec3 throw_direction = camera.GetThrowDirection(event->button.x, event->button.y, Context::Get().GetWindowWidth(), Context::Get().GetWindowHeight());
-            //     printf("World position: %f, %f, %f\n", throw_direction.x, throw_direction.y, throw_direction.z);
-
-            //     // invert throw direction
-            //     throw_direction = -throw_direction;
-
-            //     // Spawn a box at the throw direction
-            //     // remove old ball first
-            //     physics_manager.DestroyBody(ball_id);
-            //     ball_id = physics_manager.CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
-
-            //     // Throw the ball towards the blocks
-            //     physics_manager.GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(throw_direction.x * 20.0f, throw_direction.y * 20.0f, throw_direction.z * 20.0f));
-
-
-            // }
-            
             break;
         case SDL_EVENT_MOUSE_BUTTON_UP:
             if (event->button.button == SDL_BUTTON_LEFT) {
@@ -122,6 +91,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
             break;
         case SDL_EVENT_MOUSE_WHEEL:
             //camera.SetDistance(camera.GetDistance() - event->wheel.y);
+            InputService::Get().SetScrollY(event->wheel.y);
             break;
     }
 

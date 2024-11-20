@@ -1,35 +1,26 @@
 #pragma once
 
 #include "macros/singleton.hpp"
+#include <glm/glm.hpp>
 
 class InputService {
 MAKE_SINGLETON(InputService)
 private:
-    float mMouseX;
-    float mMouseY;
-
-    float mMouseRelX;
-    float mMouseRelY;
+    glm::vec2 mMousePosition;
+    glm::vec2 mMouseDelta;
 
     bool mIsLeftMouseDown;
     bool mIsRightMouseDown;
 
+    float mScrollY;
+
 public:
-    
-
-    void Update() {
-        mMouseRelX = 0.0f;
-        mMouseRelY = 0.0f;
-    }
-
     void SetMousePosition(float inX, float inY) {
-        mMouseX = inX;
-        mMouseY = inY;
+        mMousePosition = glm::vec2(inX, inY);
     }
 
-    void SetMouseRelativePosition(float inX, float inY) {
-        mMouseRelX = inX;
-        mMouseRelY = inY;
+    void SetMouseDelta(float inX, float inY) {
+        mMouseDelta = glm::vec2(inX, inY);
     }
 
     void SetLeftMouseDown(bool inValue) {
@@ -40,6 +31,23 @@ public:
         mIsRightMouseDown = inValue;
     }
 
+    void SetScrollY(float inValue) {
+        mScrollY = inValue;
+    }
+
+    void Update() {
+        mMouseDelta = glm::vec2(0.0f);
+        mScrollY = 0.0f;
+    }
+
+    inline glm::vec2 GetMousePosition() const {
+        return mMousePosition;
+    }
+
+    inline glm::vec2 GetMouseDelta() const {
+        return mMouseDelta;
+    }
+
     inline bool IsLeftMouseDown() const {
         return mIsLeftMouseDown;
     }
@@ -48,19 +56,7 @@ public:
         return mIsRightMouseDown;
     }
 
-    inline float GetMouseX() const {
-        return mMouseX;
-    }
-
-    inline float GetMouseY() const {
-        return mMouseY;
-    }
-
-    inline float GetMouseRelX() const {
-        return mMouseRelX;
-    }
-
-    inline float GetMouseRelY() const {
-        return mMouseRelY;
+    inline float GetScrollY() const {
+        return mScrollY;
     }
 };
