@@ -35,7 +35,7 @@ set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "")
 set(ASSIMP_NO_EXPORT ON CACHE BOOL "")
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "")
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "")
-set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "")
+set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "")
 
 # Add Assimp as a dependency
 add_subdirectory(thirdparty/assimp)
@@ -98,3 +98,6 @@ execute_process(
 if(NOT SHADERS_RESULT EQUAL 0)
     message(FATAL_ERROR "Python script failed with error code: ${SHADERS_RESULT}")
 endif()
+
+# Copy the content folder over to the build directory
+file(COPY content DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)

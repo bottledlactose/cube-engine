@@ -5,9 +5,12 @@
 
 #include <SDL3/SDL_gpu.h>
 
+#include "graphics/MeshHandle.hpp"
+
 class ContentManager {
 private:
     eastl::unordered_map<eastl::string, SDL_GPUShader *> mShaders;
+    eastl::unordered_map<eastl::string, MeshHandle *> mMeshes;
 
 public:
     ContentManager() = default;
@@ -22,4 +25,9 @@ public:
         Uint32 inStorageTextureCount
     );
     void UnloadShader(const eastl::string &inPath);
+
+    MeshHandle *LoadMesh(const eastl::string &inPath);
+    void UnloadMesh(const eastl::string &inPath);
+
+    void Unload();
 };

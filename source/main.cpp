@@ -19,19 +19,16 @@
 #include "physics/PhysicsService.hpp"
 #include "Camera.hpp"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
-#define _EASTL_DEFINE_OPERATOR_IMPL(...) void *__cdecl operator new[](__VA_ARGS__) { return new uint8_t[size]; }
+#define EASTL_DEFINE_OPERATOR_IMPL(...) void *__cdecl operator new[](size_t size, __VA_ARGS__) { return new uint8_t[size]; }
 
 // One-time definitions of operator new[] for EASTL
-_EASTL_DEFINE_OPERATOR_IMPL(size_t size, const char*, int, unsigned, const char*, int)
-_EASTL_DEFINE_OPERATOR_IMPL(size_t size, size_t, size_t, const char*, int, unsigned int, const char*, int)
+EASTL_DEFINE_OPERATOR_IMPL(const char*, int, unsigned, const char*, int)
+EASTL_DEFINE_OPERATOR_IMPL(size_t, size_t, const char*, int, unsigned int, const char*, int)
 
 #include <EASTL/vector.h>
 
-static MeshHandle *mesh_handle = nullptr;
+static MeshHandle *cube_mesh = nullptr;
+static MeshHandle *ball_mesh = nullptr;
 
 struct Material {
     glm::vec4 ambient;
@@ -89,95 +86,17 @@ static JPH::BodyID ball_id;
 
 static Camera camera(45.0f, 0.0f, -90.0f, 5.0f);
 
-// test mesh data
-struct MeshData {
-    eastl::vector<PositionNormalTextureVertex> vertices;
-    eastl::vector<Uint16> indices;
-};
-
-static MeshData AssimpProcessMesh(const aiMesh *mesh, const aiScene *scene) {
-    eastl::vector<PositionNormalTextureVertex> vertices;
-    eastl::vector<Uint16> indices;
-
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        PositionNormalTextureVertex vertex;
-
-        vertex.mPosition.x = mesh->mVertices[i].x;
-        vertex.mPosition.y = mesh->mVertices[i].y;
-        vertex.mPosition.z = mesh->mVertices[i].z;
-
-        vertex.mNormal.x = mesh->mNormals[i].x;
-        vertex.mNormal.y = mesh->mNormals[i].y;
-        vertex.mNormal.z = mesh->mNormals[i].z;
-
-        if (mesh->mTextureCoords[0]) {
-            vertex.mTexCoords.x = mesh->mTextureCoords[0][i].x;
-            vertex.mTexCoords.y = mesh->mTextureCoords[0][i].y;
-        } else {
-            vertex.mTexCoords = glm::vec2(0.0f, 0.0f);
-        }
-
-        vertices.push_back(vertex);
-    }
-
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-        aiFace face = mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++) {
-            indices.push_back(face.mIndices[j]);
-        }
-    }
-
-    return {
-        .vertices = vertices,
-        .indices = indices
-    };
-}
-
-static MeshData AssimpProcessNode(const aiNode *node, const aiScene *scene) {
-    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        MeshData data = AssimpProcessMesh(mesh, scene);
-
-        return data; // only process the first mesh for now
-    }
-
-    for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        return AssimpProcessNode(node->mChildren[i], scene);
-    }
-}
-
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
     if (!Context::Get().Initialize({ "boomblox", 1270, 720 })) {
         return SDL_APP_FAILURE;
     }
 
-    // TEST ASSIMP
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile("../../content/cube.obj", aiProcess_Triangulate | aiProcess_FlipUVs);
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        fprintf(stderr, "ERROR::ASSIMP::%s\n", importer.GetErrorString());
-        return SDL_APP_FAILURE;
-    }
-
-    MeshData mesh_data = AssimpProcessNode(scene->mRootNode, scene);
-
-    // Create a mesh from the data
-    // TODO: Clean up input parameters (separate unit sizes from counts to ease things up)
-    mesh_handle = RenderService::Get().CreateMesh(
-        mesh_data.vertices.data(),
-        sizeof(PositionNormalTextureVertex) * mesh_data.vertices.size(),
-        mesh_data.vertices.size(),
-        mesh_data.indices.data(),
-        sizeof(Uint16) * mesh_data.indices.size(),
-        mesh_data.indices.size()
-    );
+    cube_mesh = Context::Get().GetContent().LoadMesh("content/1x1.glb");
+    ball_mesh = Context::Get().GetContent().LoadMesh("content/ball.glb");
 
     floor_id = PhysicsService::Get().CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
-
     ball_id = PhysicsService::Get().CreateBall(JPH::Vec3(-5.0f, 0.0f, 0.0f), 0.5f);
-    // Throw the ball towards the blocks
-    PhysicsService::Get().GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(20.0f, 0.0f, 0.0f));
 
     for (const JPH::Vec3 &position : box_positions) {
         JPH::BodyID box_id = PhysicsService::Get().CreateBox(position, JPH::Vec3(0.5f, 0.5f, 0.5f), true);
@@ -334,7 +253,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
             SDL_PushGPUFragmentUniformData(command_buffer, 1, &material, sizeof(Material));
 
-            RenderService::Get().DrawMesh(render_pass, mesh_handle);
+            RenderService::Get().DrawMesh(render_pass, cube_mesh);
         }
 
         // Draw light sources
@@ -347,7 +266,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
             glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * model_matrix;
 
             SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
-            RenderService::Get().DrawMesh(render_pass, mesh_handle);
+            RenderService::Get().DrawMesh(render_pass, cube_mesh);
         }
 
         // BALL POSITION TESTING
@@ -360,12 +279,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
         glm::mat4 ball_model_matrix = glm::mat4(1.0f);
         ball_model_matrix = glm::translate(ball_model_matrix, glm::vec3(ball_position.GetX(), ball_position.GetY(), ball_position.GetZ()));
         ball_model_matrix *= glm::mat4_cast(glm_ball_rotation);
-        ball_model_matrix = glm::scale(ball_model_matrix, glm::vec3(0.2f));
+        ball_model_matrix = glm::scale(ball_model_matrix, glm::vec3(1.0f));
 
         glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * ball_model_matrix;
 
         SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
-        RenderService::Get().DrawMesh(render_pass, mesh_handle);
+        RenderService::Get().DrawMesh(render_pass, ball_mesh);
 
         SDL_EndGPURenderPass(render_pass);
 
@@ -460,7 +379,6 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 
     PhysicsService::Get().DestroyBody(floor_id);
 
-    RenderService::Get().DestroyMesh(mesh_handle);
-
+    Context::Get().GetContent().Unload();
     Context::Get().Shutdown();
 }

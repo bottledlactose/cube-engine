@@ -7,3 +7,6 @@ build/
 # Exclude compiled header files
 shaders/*.h
 shaders/*.spv
+
+# Exclude Blender backup files
+*.blend1
