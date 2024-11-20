@@ -3,6 +3,7 @@
 #include "macros/log.hpp"
 
 #include "graphics/RenderService.hpp"
+#include "InputService.hpp"
 
 bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
     // Initialize the SDL video subsystem, needed for window creation and rendering
@@ -22,6 +23,9 @@ bool Context::Initialize(const ContextCreateInfo &inCreateInfo) {
     if (!RenderService::Get().Initialize(mWindow)) {
         return false;
     }
+
+    // Initialize input service
+    InputService::Get();
 
     return true;
 }
@@ -56,14 +60,17 @@ void Context::BeginFrame() {
     mPreviousTime = mCurrentTime;
 }
 
-void Context::EndFrame() {
+void Context::EndFrame() {    
+    // Update input service
+    InputService::Get().Update();
+
     // Calculate the elapsed time for the frame
     Uint64 frame_end_time = SDL_GetTicks();
     Uint64 frame_duration = frame_end_time - mPreviousTime;
 
     // Calculate target frame duration for 60 FPS in milliseconds
     const Uint64 target_frame_duration = 1000 / mTargetFPS;
-
+    
     // If the frame finished too quickly, add a delay to cap the frame rate
     if (frame_duration < target_frame_duration) {
         SDL_Delay(target_frame_duration - frame_duration);

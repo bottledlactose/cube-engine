@@ -19,6 +19,7 @@
 #include "physics/PhysicsManager.hpp"
 #include "Camera.hpp"
 #include "Scene.hpp"
+#include "InputService.hpp"
 
 #define EASTL_DEFINE_OPERATOR_IMPL(...) void *__cdecl operator new[](size_t size, __VA_ARGS__) { return new uint8_t[size]; }
 
@@ -61,15 +62,18 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     return SDL_APP_CONTINUE;
 }
 
-// tesing
-static bool isRightMouseButtonDown = false;
-
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
     switch (event->type) {
         case SDL_EVENT_QUIT:
             return SDL_APP_SUCCESS;
         case SDL_EVENT_MOUSE_MOTION:
+
+
+            InputService::Get().SetMousePosition(event->motion.x, event->motion.y);
+            InputService::Get().SetMouseRelativePosition(event->motion.xrel, event->motion.yrel);
+
+            
 
             // if (isRightMouseButtonDown) {
             //     camera.SetYaw(camera.GetYaw() + event->motion.xrel);
@@ -78,7 +82,13 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            if (event->button.button == SDL_BUTTON_LEFT) {
+                InputService::Get().SetLeftMouseDown(true);
+            }
 
+            if (event->button.button == SDL_BUTTON_RIGHT) {
+                InputService::Get().SetRightMouseDown(true);
+            }
 
             // // print throw direction
             // if (event->button.button == SDL_BUTTON_LEFT) {
@@ -99,15 +109,15 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 
             // }
-
-
-            if (event->button.button == SDL_BUTTON_RIGHT) {
-                isRightMouseButtonDown = true;
-            }
+            
             break;
         case SDL_EVENT_MOUSE_BUTTON_UP:
+            if (event->button.button == SDL_BUTTON_LEFT) {
+                InputService::Get().SetLeftMouseDown(false);
+            }
+
             if (event->button.button == SDL_BUTTON_RIGHT) {
-                isRightMouseButtonDown = false;
+                InputService::Get().SetRightMouseDown(false);
             }
             break;
         case SDL_EVENT_MOUSE_WHEEL:

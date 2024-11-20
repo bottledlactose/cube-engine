@@ -8,6 +8,7 @@
 
 #include "Context.hpp"
 #include "graphics/RenderService.hpp"
+#include "InputService.hpp"
 
 #include "graphics/uniforms/Material.hpp"
 #include "graphics/uniforms/DirectionalLight.hpp"
@@ -79,6 +80,12 @@ void Scene::Update() {
             static_cast<float>(Context::Get().GetWindowWidth()),
             static_cast<float>(Context::Get().GetWindowHeight())
         );
+    }
+
+    if (InputService::Get().IsRightMouseDown()) {
+        // TODO: apply delta time
+        mCamera.SetYaw(mCamera.GetYaw() + InputService::Get().GetMouseRelX());
+        mCamera.SetPitch(mCamera.GetPitch() + InputService::Get().GetMouseRelY());
     }
 
     mPhysicsManager.Update();
