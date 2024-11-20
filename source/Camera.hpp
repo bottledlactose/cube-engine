@@ -25,6 +25,7 @@ public:
 
     void SetFov(float inFov);
     void SetAspectRatio(float inAspectRatio);
+    void SetAspectRatio(float inWidth, float inHeight);
     void SetPitch(float inPitch);
     void SetYaw(float inYaw);
     void SetDistance(float inDistance);

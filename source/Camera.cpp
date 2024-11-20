@@ -45,6 +45,10 @@ void Camera::SetAspectRatio(float inAspectRatio) {
     mIsProjectionDirty = true;
 }
 
+void Camera::SetAspectRatio(float inWidth, float inHeight) {
+    SetAspectRatio(inWidth / inHeight);
+}
+
 void Camera::SetPitch(float inPitch) {
 
     if (inPitch > 89.0f) {

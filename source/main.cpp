@@ -18,6 +18,7 @@
 #include "graphics/RenderService.hpp"
 #include "physics/PhysicsManager.hpp"
 #include "Camera.hpp"
+#include "Scene.hpp"
 
 #define EASTL_DEFINE_OPERATOR_IMPL(...) void *__cdecl operator new[](size_t size, __VA_ARGS__) { return new uint8_t[size]; }
 
@@ -27,65 +28,8 @@ EASTL_DEFINE_OPERATOR_IMPL(size_t, size_t, const char*, int, unsigned int, const
 
 #include <EASTL/vector.h>
 
-static MeshHandle *cube_mesh = nullptr;
-static MeshHandle *ball_mesh = nullptr;
-
-struct Material {
-    glm::vec4 ambient;
-    glm::vec4 diffuse;
-    glm::vec4 specular;
-    glm::vec4 shininess;
-};
-
-struct DirectionalLight {
-    glm::vec4 direction;
-    glm::vec4 ambient;
-    glm::vec4 diffuse;
-    glm::vec4 specular;
-};
-
-struct PointLight {
-    glm::vec4 position;
-    float constant;
-    float linear;
-    float quadratic;
-    float _padding;
-    glm::vec4 ambient;
-    glm::vec4 diffuse;
-    glm::vec4 specular;
-};
-
-struct FragmentUniform {
-    glm::vec4 camera_position;
-    //Material material;
-    DirectionalLight directional_light;
-    PointLight point_light[4];
-};
-
-static eastl::vector<JPH::Vec3> box_positions = {
-    JPH::Vec3(0.0f, 0.0f, 0.0f),
-    JPH::Vec3(1.0f, 0.0f, 0.0f),
-    JPH::Vec3(0.0f, 1.0f, 0.0f),
-    JPH::Vec3(0.0f, -1.0f, 0.0f),
-    JPH::Vec3(0.0f, 0.0f, 1.0f),
-    JPH::Vec3(0.0f, 0.0f, -1.0f),
-    JPH::Vec3(0.55f, 5.0f, 0.0f),
-};
-
-static PhysicsManager physics_manager;
-static eastl::vector<JPH::BodyID> bodies;
-
-static eastl::vector<glm::vec3> light_positions = {
-    glm::vec3(2.0f, 0.2f, 2.0f),
-    glm::vec3(-2.0f, 0.2f, 2.0f),
-    glm::vec3(2.0f, 0.2f, -2.0f),
-    glm::vec3(-2.0f, 0.2f, -2.0f)
-};
-
-static JPH::BodyID floor_id;
-static JPH::BodyID ball_id;
-
-static Camera camera(45.0f, 0.0f, -90.0f, 5.0f);
+static Scene scene;
+//static Camera camera(45.0f, 0.0f, -90.0f, 5.0f);
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
@@ -93,19 +37,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
         return SDL_APP_FAILURE;
     }
 
-    physics_manager.Initialize();
-
-    cube_mesh = Context::Get().GetContent().LoadMesh("content/1x1.glb");
-    ball_mesh = Context::Get().GetContent().LoadMesh("content/ball.glb");
-
-    floor_id = physics_manager.CreateBox(JPH::Vec3(0.0f, -2.0f, 0.0f), JPH::Vec3(100.0f, 0.1f, 100.0f));
-    ball_id = physics_manager.CreateBall(JPH::Vec3(-5.0f, 0.0f, 0.0f), 0.5f);
-
-    for (const JPH::Vec3 &position : box_positions) {
-        JPH::BodyID box_id = physics_manager.CreateBox(position, JPH::Vec3(0.5f, 0.5f, 0.5f), true);
-        physics_manager.GetBodyInterface().SetLinearVelocity(box_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
-        bodies.push_back(box_id);
-    }
+    scene.Initialize();
 
     return SDL_APP_CONTINUE;
 }
@@ -115,201 +47,14 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     Context::Get().BeginFrame();
 
     if (Context::Get().IsWindowResized()) {
-        // Resize the camera aspect ratio
-        camera.SetAspectRatio(Context::Get().GetWindowWidth() / (float)Context::Get().GetWindowHeight());
-        // Resize renderer
-        RenderService::Get().SetViewport(Context::Get().GetWindowWidth(), Context::Get().GetWindowHeight());
+        RenderService::Get().SetViewport(
+            Context::Get().GetWindowWidth(),
+            Context::Get().GetWindowHeight()
+        );
     }
 
-    JPH::BodyInterface &body_interface = physics_manager.GetBodyInterface();
-    physics_manager.Update();
-
-    SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(RenderService::Get().GetDevice());
-    if (command_buffer == nullptr) {
-        fprintf(stderr, "Unable to acquire GPU command buffer: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    SDL_GPUTexture *swapchain_texture;
-    if (!SDL_AcquireGPUSwapchainTexture(command_buffer, Context::Get().GetWindow(), &swapchain_texture, nullptr, nullptr)) {
-        fprintf(stderr, "Unable to acquire GPU swapchain texture: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    if (swapchain_texture != nullptr) {
-        SDL_GPURenderPass *render_pass;
-        SDL_GPUColorTargetInfo color_target_info;
-
-        SDL_zero(color_target_info);
-        color_target_info.clear_color = {0.1f, 0.1f, 0.1f, 1.0f};
-
-        // TODO: Implement better way to check if MSAA is active
-        if (RenderService::Get().GetMSAATexture() != nullptr && RenderService::Get().GetResolveTexture() != nullptr) {
-            color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
-            color_target_info.store_op = SDL_GPU_STOREOP_RESOLVE;
-            color_target_info.texture = RenderService::Get().GetMSAATexture();
-            color_target_info.resolve_texture = RenderService::Get().GetResolveTexture();
-            color_target_info.cycle = true;
-            color_target_info.cycle_resolve_texture = true;
-        } else {
-            color_target_info.texture = swapchain_texture;
-            //color_target_info.clear_color = {0.1f, 0.1f, 0.1f, 1.0f};
-            color_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
-            color_target_info.store_op = SDL_GPU_STOREOP_STORE;
-        }
-
-        SDL_GPUDepthStencilTargetInfo depth_stencil_target_info;
-        SDL_zero(depth_stencil_target_info);
-        depth_stencil_target_info.clear_depth = 1.0f;
-        depth_stencil_target_info.load_op = SDL_GPU_LOADOP_CLEAR;
-        depth_stencil_target_info.store_op = SDL_GPU_STOREOP_DONT_CARE;
-        depth_stencil_target_info.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
-        depth_stencil_target_info.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
-        depth_stencil_target_info.texture = RenderService::Get().GetDepthTexture();
-        depth_stencil_target_info.cycle = true;
-
-        render_pass = SDL_BeginGPURenderPass(command_buffer, &color_target_info, 1, &depth_stencil_target_info);
-        
-        RenderService::Get().UsePipeline(render_pass, "default_mesh");
-
-        FragmentUniform fragment_uniform = {
-            glm::vec4(camera.GetPosition(), 1.0f),
-            {
-                glm::vec4(-0.2f, -1.0f, -0.3f, 1.0f),
-                glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
-                glm::vec4(0.8f, 0.8f, 0.8f, 1.0f)
-            },
-            {
-                {
-                    glm::vec4(light_positions[0], 1.0f),
-                    1.0f,
-                    0.09f,
-                    0.032f,
-                    0.0f,
-                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                },
-                {
-                    glm::vec4(light_positions[1], 1.0f),
-                    1.0f,
-                    0.09f,
-                    0.032f,
-                    0.0f,
-                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                },
-                {
-                    glm::vec4(light_positions[2], 1.0f),
-                    1.0f,
-                    0.09f,
-                    0.032f,
-                    0.0f,
-                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                },
-                {
-                    glm::vec4(light_positions[3], 1.0f),
-                    1.0f,
-                    0.09f,
-                    0.032f,
-                    0.0f,
-                    glm::vec4(0.2f, 0.2f, 0.2f, 1.0f),
-                    glm::vec4(0.6f, 0.6f, 0.6f, 1.0f),
-                    glm::vec4(0.7f, 0.7f, 0.7f, 1.0f)
-                }
-            }
-        };
-
-        SDL_PushGPUFragmentUniformData(command_buffer, 0, &fragment_uniform, sizeof(FragmentUniform));
-
-        for (const JPH::BodyID &body_id : bodies) {
-            JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);
-            JPH::Quat rotation = body_interface.GetRotation(body_id);
-
-            glm::quat glm_rotation = glm::quat(rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ());
-
-            glm::mat4 model_matrix = glm::mat4(1.0f);
-            model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
-            model_matrix *= glm::mat4_cast(glm_rotation);
-
-            glm::mat4 model_inverse_transpose = glm::transpose(glm::inverse(model_matrix));
-
-            glm::mat4 vertex_uniform[4] = {
-                camera.GetProjectionMatrix(),
-                camera.GetViewMatrix(),
-                model_matrix,
-                model_inverse_transpose,
-            };
-
-            Material material = {
-                glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
-                glm::vec4(1.0f, 0.5f, 0.31f, 0.0f),
-                glm::vec4(0.5f, 0.5f, 0.5f, 0.0f),
-                glm::vec4(8.0f)
-            };
-
-            SDL_PushGPUVertexUniformData(command_buffer, 0, &vertex_uniform, sizeof(glm::mat4) * 4);
-            SDL_PushGPUFragmentUniformData(command_buffer, 1, &material, sizeof(Material));
-
-            RenderService::Get().DrawMesh(render_pass, cube_mesh);
-        }
-
-        // Draw light sources
-        RenderService::Get().UsePipeline(render_pass, "light_source");
-
-        for (const glm::vec3 &light_position : light_positions) {
-            glm::mat4 model_matrix = glm::mat4(1.0f);
-            model_matrix = glm::translate(model_matrix, light_position);
-            model_matrix = glm::scale(model_matrix, glm::vec3(0.2f));
-            glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * model_matrix;
-
-            SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
-            RenderService::Get().DrawMesh(render_pass, cube_mesh);
-        }
-
-        // BALL POSITION TESTING
-        // Draw ball as a cube
-        JPH::Vec3 ball_position = body_interface.GetCenterOfMassPosition(ball_id);
-        JPH::Quat ball_rotation = body_interface.GetRotation(ball_id);
-
-        glm::quat glm_ball_rotation = glm::quat(ball_rotation.GetW(), ball_rotation.GetX(), ball_rotation.GetY(), ball_rotation.GetZ());
-
-        glm::mat4 ball_model_matrix = glm::mat4(1.0f);
-        ball_model_matrix = glm::translate(ball_model_matrix, glm::vec3(ball_position.GetX(), ball_position.GetY(), ball_position.GetZ()));
-        ball_model_matrix *= glm::mat4_cast(glm_ball_rotation);
-        ball_model_matrix = glm::scale(ball_model_matrix, glm::vec3(1.0f));
-
-        glm::mat4 mvp = camera.GetProjectionMatrix() * camera.GetViewMatrix() * ball_model_matrix;
-
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &mvp, sizeof(glm::mat4));
-        RenderService::Get().DrawMesh(render_pass, ball_mesh);
-
-        SDL_EndGPURenderPass(render_pass);
-
-        if (RenderService::Get().GetMSAATexture() != nullptr) {
-            SDL_GPUBlitInfo blit_info;
-            SDL_zero(blit_info);
-
-            blit_info.source.texture = RenderService::Get().GetResolveTexture();
-            blit_info.source.w = Context::Get().GetWindowWidth();
-            blit_info.source.h = Context::Get().GetWindowHeight();
-
-            blit_info.destination.texture = swapchain_texture;
-            blit_info.destination.w = Context::Get().GetWindowWidth();
-            blit_info.destination.h = Context::Get().GetWindowHeight();
-
-            blit_info.load_op = SDL_GPU_LOADOP_DONT_CARE;
-            blit_info.filter = SDL_GPU_FILTER_LINEAR;
-
-            SDL_BlitGPUTexture(command_buffer, &blit_info);
-        }
-    }
-
-    SDL_SubmitGPUCommandBuffer(command_buffer);
+    scene.Update();
+    scene.Draw();
 
     Context::Get().EndFrame();
 
@@ -326,34 +71,34 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
             return SDL_APP_SUCCESS;
         case SDL_EVENT_MOUSE_MOTION:
 
-            if (isRightMouseButtonDown) {
-                camera.SetYaw(camera.GetYaw() + event->motion.xrel);
-                camera.SetPitch(camera.GetPitch() + event->motion.yrel);
-            }
+            // if (isRightMouseButtonDown) {
+            //     camera.SetYaw(camera.GetYaw() + event->motion.xrel);
+            //     camera.SetPitch(camera.GetPitch() + event->motion.yrel);
+            // }
 
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
 
 
-            // print throw direction
-            if (event->button.button == SDL_BUTTON_LEFT) {
-                glm::vec3 camera_position = camera.GetPosition();
-                glm::vec3 throw_direction = camera.GetThrowDirection(event->button.x, event->button.y, Context::Get().GetWindowWidth(), Context::Get().GetWindowHeight());
-                printf("World position: %f, %f, %f\n", throw_direction.x, throw_direction.y, throw_direction.z);
+            // // print throw direction
+            // if (event->button.button == SDL_BUTTON_LEFT) {
+            //     glm::vec3 camera_position = camera.GetPosition();
+            //     glm::vec3 throw_direction = camera.GetThrowDirection(event->button.x, event->button.y, Context::Get().GetWindowWidth(), Context::Get().GetWindowHeight());
+            //     printf("World position: %f, %f, %f\n", throw_direction.x, throw_direction.y, throw_direction.z);
 
-                // invert throw direction
-                throw_direction = -throw_direction;
+            //     // invert throw direction
+            //     throw_direction = -throw_direction;
 
-                // Spawn a box at the throw direction
-                // remove old ball first
-                physics_manager.DestroyBody(ball_id);
-                ball_id = physics_manager.CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
+            //     // Spawn a box at the throw direction
+            //     // remove old ball first
+            //     physics_manager.DestroyBody(ball_id);
+            //     ball_id = physics_manager.CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
 
-                // Throw the ball towards the blocks
-                physics_manager.GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(throw_direction.x * 20.0f, throw_direction.y * 20.0f, throw_direction.z * 20.0f));
+            //     // Throw the ball towards the blocks
+            //     physics_manager.GetBodyInterface().AddLinearVelocity(ball_id, JPH::Vec3(throw_direction.x * 20.0f, throw_direction.y * 20.0f, throw_direction.z * 20.0f));
 
 
-            }
+            // }
 
 
             if (event->button.button == SDL_BUTTON_RIGHT) {
@@ -366,7 +111,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
             }
             break;
         case SDL_EVENT_MOUSE_WHEEL:
-            camera.SetDistance(camera.GetDistance() - event->wheel.y);
+            //camera.SetDistance(camera.GetDistance() - event->wheel.y);
             break;
     }
 
@@ -374,14 +119,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-
-    for (const JPH::BodyID &body_id : bodies) {
-        physics_manager.DestroyBody(body_id);
-    }
-
-    physics_manager.DestroyBody(floor_id);
-    physics_manager.Shutdown();
-
+    scene.Shutdown();
     Context::Get().GetContent().Unload();
     Context::Get().Shutdown();
 }
