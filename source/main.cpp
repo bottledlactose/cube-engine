@@ -48,6 +48,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
     Context::Get().BeginFrame();
 
     if (Context::Get().IsWindowResized()) {
+        // Resize the viewport
         RenderService::Get().SetViewport(
             Context::Get().GetWindowWidth(),
             Context::Get().GetWindowHeight()
@@ -90,7 +91,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
             }
             break;
         case SDL_EVENT_MOUSE_WHEEL:
-            //camera.SetDistance(camera.GetDistance() - event->wheel.y);
             InputService::Get().SetScrollY(event->wheel.y);
             break;
     }

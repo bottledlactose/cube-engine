@@ -68,6 +68,10 @@ public:
         return mDevice;
     }
 
+    inline SDL_GPUSampleCount GetSampleCount() const {
+        return mSampleCount;
+    }
+
     inline SDL_GPUTexture *GetDepthTexture() const {
         return mDepthTexture;
     }

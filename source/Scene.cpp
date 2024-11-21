@@ -1,5 +1,7 @@
 #include "Scene.hpp"
 
+#include "marcos/log.hpp"
+
 #include <EASTL/vector.h>
 
 #include <glm/glm.hpp>
@@ -55,8 +57,6 @@ void Scene::Initialize() {
         mPhysicsManager.GetBodyInterface().SetLinearVelocity(box_id, JPH::Vec3(0.0f, -1.0f, 0.0f));
         mCubeBodies.push_back(box_id);
     }
-
-    // return true;
 }
 
 void Scene::Shutdown() {
@@ -93,7 +93,6 @@ void Scene::Update() {
     }
 
     if (InputService::Get().IsLeftMouseDown()) {
-
         glm::vec3 camera_position = mCamera.GetPosition();
         glm::vec2 mouse_position = InputService::Get().GetMousePosition();
 
@@ -102,9 +101,10 @@ void Scene::Update() {
             static_cast<float>(Context::Get().GetWindowWidth()),
             static_cast<float>(Context::Get().GetWindowHeight())
         );
+        // Invert the throw direction
         throw_direction = -throw_direction;
 
-        // Spawn a box at the throw direction
+        // Spawn a box at the camera position
         mPhysicsManager.DestroyBody(mBallID);
         mBallID = mPhysicsManager.CreateBall(JPH::Vec3(camera_position.x, camera_position.y, camera_position.z), 0.5f);
 
@@ -120,16 +120,14 @@ void Scene::Draw() {
     
     SDL_GPUCommandBuffer *command_buffer = SDL_AcquireGPUCommandBuffer(RenderService::Get().GetDevice());
     if (command_buffer == nullptr) {
-        fprintf(stderr, "Unable to acquire GPU command buffer: %s", SDL_GetError());
-        // return SDL_APP_FAILURE;
-        // return false;
+        LOG_ERROR("Unable to acquire GPU command buffer: %s", SDL_GetError());
+        return;
     }
 
     SDL_GPUTexture *swapchain_texture;
     if (!SDL_AcquireGPUSwapchainTexture(command_buffer, Context::Get().GetWindow(), &swapchain_texture, nullptr, nullptr)) {
-        fprintf(stderr, "Unable to acquire GPU swapchain texture: %s", SDL_GetError());
-        //return SDL_APP_FAILURE;
-        // return false;
+        LOG_ERROR("Unable to acquire GPU swapchain texture: %s", SDL_GetError());
+        return;
     }
 
     if (swapchain_texture != nullptr) {

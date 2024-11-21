@@ -40,14 +40,18 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
     assert(inWindow != nullptr);
     mWindow = inWindow;
 
+    // Get window dimensions
+    int window_width, window_height;
+    SDL_GetWindowSize(mWindow, &window_width, &window_height);
+
     mDevice = SDL_CreateGPUDevice(SDL_ShaderCross_GetSPIRVShaderFormats(), true, nullptr);
     if (mDevice == nullptr) {
-        fprintf(stderr, "Unable to create GPU device: %s", SDL_GetError());
+        LOG_ERROR("Unable to create GPU device: %s", SDL_GetError());
         return false;
     }
 
     if (!SDL_ClaimWindowForGPUDevice(mDevice, mWindow)) {
-        fprintf(stderr, "Unable to claim window for GPU device: %s", SDL_GetError());
+        LOG_ERROR("Unable to claim window for GPU device: %s", SDL_GetError());
         return false;
     }
 
@@ -57,17 +61,20 @@ bool RenderService::Initialize(SDL_Window *inWindow) {
         mDevice,
         SDL_GetGPUSwapchainTextureFormat(mDevice, mWindow),
         SDL_GPU_SAMPLECOUNT_4)) {
-        mSampleCount = SDL_GPU_SAMPLECOUNT_4;
-    }
+            // If the renderer supports 4x MSAA, use it
+            mSampleCount = SDL_GPU_SAMPLECOUNT_4;
+        }
 
-    mDepthTexture = CreateDepthTexture(1280, 720);
+    mDepthTexture = CreateDepthTexture(window_width, window_height);
     if (mDepthTexture == nullptr) {
         return false;
     }
 
-    // We don't need to error check these because MSAA is optional
-    mMSAATexture = CreateMSAATexture(1280, 720);
-    mResolveTexture = CreateResolveTexture(1280, 720);
+    if (mSampleCount != SDL_GPU_SAMPLECOUNT_1) {
+        // We don't need to error check these because MSAA is optional
+        mMSAATexture = CreateMSAATexture(window_width, window_height);
+        mResolveTexture = CreateResolveTexture(window_width, window_height);
+    }
 
     SDL_GPUShader *basic_triangle_vert = RenderService::Get().CreateShader(
         SDL_GPU_SHADERSTAGE_VERTEX,
@@ -119,7 +126,6 @@ void RenderService::DestroyPipeline(const eastl::string &inName) {
 }
 
 void RenderService::UsePipeline(SDL_GPURenderPass *inRenderPass, const eastl::string &inName) const {
-
     auto it = mPipelines.find(inName);
     if (it == mPipelines.end()) {
         LOG_ERROR("Pipeline not found: %s", inName.c_str());
@@ -294,12 +300,6 @@ SDL_GPUTexture *RenderService::CreateDepthTexture(Uint32 inWidth, Uint32 inHeigh
 }
 
 SDL_GPUTexture *RenderService::CreateMSAATexture(Uint32 inWidth, Uint32 inHeight) {
-
-    if (mSampleCount == SDL_GPU_SAMPLECOUNT_1) {
-        LOG_INFO("MSAA not supported");
-        return nullptr;
-    }
-
     SDL_GPUTextureCreateInfo create_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GetGPUSwapchainTextureFormat(mDevice, Context::Get().GetWindow()),
@@ -321,12 +321,6 @@ SDL_GPUTexture *RenderService::CreateMSAATexture(Uint32 inWidth, Uint32 inHeight
 }
 
 SDL_GPUTexture *RenderService::CreateResolveTexture(Uint32 inWidth, Uint32 inHeight) {
-
-    if (mSampleCount == SDL_GPU_SAMPLECOUNT_1) {
-        LOG_INFO("MSAA not supported");
-        return nullptr;
-    }
-
     SDL_GPUTextureCreateInfo create_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GetGPUSwapchainTextureFormat(mDevice, Context::Get().GetWindow()),
