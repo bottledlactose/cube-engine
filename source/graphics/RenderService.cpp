@@ -482,3 +482,92 @@ void RenderService::DrawMesh(SDL_GPURenderPass *inRenderPass, MeshHandle *inMesh
         SDL_DrawGPUIndexedPrimitives(inRenderPass, inMesh->mIndexCount, 1, 0, 0, 0);
     }
 }
+
+RenderState *RenderService::BeginPass() {
+    RenderState *state = (RenderState *)SDL_malloc(sizeof(RenderState));
+    if (state == nullptr) {
+        LOG_ERROR("Unable to allocate memory for render state: %s", SDL_GetError());
+        return nullptr;
+    }
+
+    state->mCommandBuffer = SDL_AcquireGPUCommandBuffer(mDevice);
+    if (state->mCommandBuffer == nullptr) {
+        LOG_ERROR("Unable to acquire GPU command buffer: %s", SDL_GetError());
+        SDL_free(state);
+        return nullptr;
+    }
+
+    state->mSwapchainTexture = nullptr;
+    if (!SDL_AcquireGPUSwapchainTexture(state->mCommandBuffer, Context::Get().GetWindow(), &state->mSwapchainTexture, nullptr, nullptr)) {
+        LOG_ERROR("Unable to acquire GPU swapchain texture: %s", SDL_GetError());
+        SDL_free(state);
+        return nullptr;
+    }
+
+    if (state->mSwapchainTexture != nullptr) {
+        SDL_zero(state->mColorTargetInfo);
+        state->mColorTargetInfo.clear_color = {0.1f, 0.1f, 0.1f, 1.0f};
+
+        // Check is MSAA is enabled
+        if (mSampleCount != SDL_GPU_SAMPLECOUNT_1) {
+            state->mColorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+            state->mColorTargetInfo.store_op = SDL_GPU_STOREOP_RESOLVE;
+            state->mColorTargetInfo.texture = mMSAATexture;
+            state->mColorTargetInfo.resolve_texture = mResolveTexture;
+            state->mColorTargetInfo.cycle = true;
+            state->mColorTargetInfo.cycle_resolve_texture = true;
+        } else {
+            state->mColorTargetInfo.texture = state->mSwapchainTexture;
+            state->mColorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+            state->mColorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+        }
+
+        // Set up depth buffer info
+        SDL_zero(state->mDepthStencilTargetInfo);
+        state->mDepthStencilTargetInfo = {
+            .texture = mDepthTexture,
+            .clear_depth = 1.0f,
+            .load_op = SDL_GPU_LOADOP_CLEAR,
+            .store_op = SDL_GPU_STOREOP_DONT_CARE,
+            .stencil_load_op = SDL_GPU_LOADOP_DONT_CARE,
+            .stencil_store_op = SDL_GPU_STOREOP_DONT_CARE,
+            .cycle = true
+        };
+
+        // Begin render pass
+        state->mRenderPass = SDL_BeginGPURenderPass(
+            state->mCommandBuffer,
+            &state->mColorTargetInfo, 1,
+            &state->mDepthStencilTargetInfo
+        );
+
+        return state;
+    }
+
+    SDL_free(state);
+    return nullptr;
+}
+
+void RenderService::EndPass(RenderState *inState) {
+    SDL_EndGPURenderPass(inState->mRenderPass);
+
+    // Check if MSAA is enabled
+    if (mSampleCount != SDL_GPU_SAMPLECOUNT_1) {
+        // Blit the resolved MSAA texture to the swapchain texture
+        SDL_GPUBlitInfo blit_info = {
+            .source = {
+                .texture = mResolveTexture,
+                .w = static_cast<Uint32>(Context::Get().GetWindowWidth()),
+                .h = static_cast<Uint32>(Context::Get().GetWindowHeight())
+            },
+            .destination = {
+                .texture = inState->mSwapchainTexture,
+                .w = static_cast<Uint32>(Context::Get().GetWindowWidth()),
+                .h = static_cast<Uint32>(Context::Get().GetWindowHeight())
+            },
+            .load_op = SDL_GPU_LOADOP_DONT_CARE
+        };
+
+        SDL_BlitGPUTexture(inState->mCommandBuffer, &blit_info);
+    }
+}

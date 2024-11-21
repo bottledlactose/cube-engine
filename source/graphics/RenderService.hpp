@@ -11,6 +11,15 @@
 #include <EASTL/string.h>
 #include <EASTL/unordered_map.h>
 
+struct RenderState {
+    SDL_GPUCommandBuffer *mCommandBuffer;
+    SDL_GPUTexture *mSwapchainTexture;
+    SDL_GPURenderPass *mRenderPass;
+
+    SDL_GPUColorTargetInfo mColorTargetInfo;
+    SDL_GPUDepthStencilTargetInfo mDepthStencilTargetInfo;
+};
+
 class RenderService {
 MAKE_SINGLETON(RenderService)
 private:
@@ -63,6 +72,9 @@ public:
     ) const;
     void DestroyMesh(MeshHandle *inMesh) const;
     void DrawMesh(SDL_GPURenderPass *inRenderPass, MeshHandle *inMesh) const;
+
+    RenderState *BeginPass();
+    void EndPass(RenderState *inState);
 
     inline SDL_GPUDevice *GetDevice() const {
         return mDevice;
