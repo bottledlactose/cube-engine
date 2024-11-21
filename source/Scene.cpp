@@ -16,6 +16,8 @@
 #include "graphics/uniforms/DirectionalLight.hpp"
 #include "graphics/uniforms/PointLight.hpp"
 
+#include "Transform.hpp"
+
 // Temp struct to just make things work
 struct FragmentUniform {
     glm::vec4 camera_position;
@@ -182,15 +184,9 @@ void Scene::Draw() {
     JPH::BodyInterface &body_interface = mPhysicsManager.GetBodyInterface();
 
     for (const JPH::BodyID &body_id : mCubeBodies) {
-        JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);
-        JPH::Quat rotation = body_interface.GetRotation(body_id);
+        Transform model_transform = Transform::FromBody(body_interface, body_id);
 
-        glm::quat glm_rotation = glm::quat(rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ());
-
-        glm::mat4 model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::translate(model_matrix, glm::vec3(position.GetX(), position.GetY(), position.GetZ()));
-        model_matrix *= glm::mat4_cast(glm_rotation);
-
+        glm::mat4 model_matrix = model_transform.GetModelMatrix();
         glm::mat4 model_inverse_transpose = glm::transpose(glm::inverse(model_matrix));
 
         glm::mat4 vertex_uniform[4] = {
@@ -217,26 +213,20 @@ void Scene::Draw() {
     RenderService::Get().UsePipeline(state->mRenderPass, "light_source");
 
     for (const glm::vec3 &light_position : sLightPositions) {
-        glm::mat4 model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::translate(model_matrix, light_position);
-        model_matrix = glm::scale(model_matrix, glm::vec3(0.2f));
+
+        Transform model_transform;
+        model_transform.mPosition = light_position;
+        model_transform.mScale = glm::vec3(0.2f);
+
+        glm::mat4 model_matrix = model_transform.GetModelMatrix();
         glm::mat4 mvp = mCamera.GetProjectionMatrix() * mCamera.GetViewMatrix() * model_matrix;
 
         SDL_PushGPUVertexUniformData(state->mCommandBuffer, 0, &mvp, sizeof(glm::mat4));
         RenderService::Get().DrawMesh(state->mRenderPass, mCubeMesh);
     }
 
-    // BALL POSITION TESTING
-    // Draw ball as a cube
-    JPH::Vec3 ball_position = body_interface.GetCenterOfMassPosition(mBallID);
-    JPH::Quat ball_rotation = body_interface.GetRotation(mBallID);
-
-    glm::quat glm_ball_rotation = glm::quat(ball_rotation.GetW(), ball_rotation.GetX(), ball_rotation.GetY(), ball_rotation.GetZ());
-
-    glm::mat4 ball_model_matrix = glm::mat4(1.0f);
-    ball_model_matrix = glm::translate(ball_model_matrix, glm::vec3(ball_position.GetX(), ball_position.GetY(), ball_position.GetZ()));
-    ball_model_matrix *= glm::mat4_cast(glm_ball_rotation);
-    ball_model_matrix = glm::scale(ball_model_matrix, glm::vec3(1.0f));
+    Transform ball_transform = Transform::FromBody(body_interface, mBallID);
+    glm::mat4 ball_model_matrix = ball_transform.GetModelMatrix();
 
     glm::mat4 mvp = mCamera.GetProjectionMatrix() * mCamera.GetViewMatrix() * ball_model_matrix;
 
