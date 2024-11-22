@@ -107,7 +107,7 @@ Additional abstraction and body management would have been a good idea for this 
 
 There is only one single content type being loaded by the `ContentManager`, namely singular 3D meshes. The original idea was to have the `ContentManager` load the full 3D model rather than just the first mesh it can find. There are still leftovers of a shader loading function from when shaders were being loaded from disk rather than header files.
 
-The `ContentManager` was designed to be used by both the `Context` as a global, long-term content storage for assets that are potentially re-used across different scenes, such as fonts, and in the scope of a scene to load short-term assets that are loaded when a scene is created, and destroyed when a scene shuts down.
+The `ContentManager` was designed to be used by both the `Context` as a global, long-term content storage for assets that are potentially re-used across different scenes, such as fonts, and in the scope of a scene to load short-term assets that are loaded when a scene is created, and destroyed when a scene shuts down. It's only designed to contain reference to actual resources, such as those created on the graphics device. A singular `Unload` function takes care of properly cleaning and unloading each asset loaded with the current `ContentManager`.
 
 ### Input
 
