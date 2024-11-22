@@ -92,3 +92,23 @@ struct Material {
 };
 ```
 The main reason I didn't do it like this, is because you'd be forced to access `shininess` through something like `material.shininess.x` in the shader itself rather than simply `material.shininess`.
+
+Lastly, there's also the `source/graphics/vertices` class which was originally intended to contain multiple vertex layouts, although I ended up with only a single `PositionNormalTextureVertex` struct. As the name already makes clear, it contains a vertex position, normal and texture coordinates. It does not contain color data since this is already managed through the `Material` struct in the mesh shader itself.
+
+### Physics
+
+All physics code is contained in the `source/physics/PhysicsManager` file. It gets initialized when then scene is loaded and is largely copy-pasted from the Jolt Physics boilerplate example code, which somehow worked out of the box.
+
+The `PhysicsManager` comes with ways to easily manage the initialization of the physics state as well as physics bodies that are created through `CreateBall` and `CreateBox`. Whereas `CreateBall` always creates a dynamic ball, `CreateBox` comes with an additional parameter to decide if the created box body should be static or dynamic.
+
+Additional abstraction and body management would have been a good idea for this class, especially since body management is currently up to the scene itself, whereas the `PhysicsManager` could simply keep track of all physics bodies and clear then all at once as soon as the scene shuts down.
+
+### Content
+
+There is only one single content type being loaded by the `ContentManager`, namely singular 3D meshes. The original idea was to have the `ContentManager` load the full 3D model rather than just the first mesh it can find. There are still leftovers of a shader loading function from when shaders were being loaded from disk rather than header files.
+
+The `ContentManager` was designed to be used by both the `Context` as a global, long-term content storage for assets that are potentially re-used across different scenes, such as fonts, and in the scope of a scene to load short-term assets that are loaded when a scene is created, and destroyed when a scene shuts down.
+
+### Input
+
+Since this engine involves only mouse input, the `InputService` is responsible for returning the current state of the user's input. The state is updated through the main event loop in `main.cpp` and can then be fetched globally around the engine.
