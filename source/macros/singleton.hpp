@@ -1,5 +1,6 @@
 #pragma once
 
+// This macro is used to create a singleton class. It should be placed in the body of the class.
 #define MAKE_SINGLETON(class_name) \
     private: \
         class_name() = default; \
