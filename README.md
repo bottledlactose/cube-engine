@@ -120,12 +120,13 @@ I initially started working on a game idea where the player would be tasked with
 
 Here are the main things I've learned from working on this project:
 
-- Creating a 3D engine from scratch is a lot of work
 - Creating a 3D engine from scratch is ***A LOT*** of work even if it's a simple game idea such as the block tower destruction mechanic
 - Singletons aren't so bad for game development, since they save a lot of time and don't have too many side effects if used sparingly and correctly
-- Writing shaders can be tough, especially with strange requirements such as the 16 byte layout restrictions
+- Writing shaders can be tough, especially with strange alignment restrictions such as the 16 byte layout requiring padding to work correctly
 - There's nothing wrong with not getting your code "right" the first time. Pretty much every single line of code I wrote initially has been changed to something else as the project grew
 
-## Future Plans
+## What's Next?
 
-I have no intention on keeping up development on this repository, it more serves as an archive for what I achieved. Just something for myself to look back at and read back what I learned. However, I might do a few fixes here and there and clean things up a little bit.
+I have no intention on keeping up development on this repository, it services primarily as an archive for what I achieved. A personal archive to reflect on my learning journey. However, I might do a few fixes here and there and clean things up a little bit.
+
+Feel free to have a look at this project's source code as a learning resource!
