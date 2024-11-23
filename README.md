@@ -1,12 +1,12 @@
 # Cube Engine
 
-This project mostly serves as a massive learning experience for me in terms of 3D game engine development. I've learned various skills, such as writing low-level memory stuff using C++, using a novel graphics engine technology, refactoring code, setting up a physics engine and lots, lots more.
+This project mostly serves as a massive learning experience for me in terms of 3D game engine development. I've learned various skills, such as dealing with low-level memory layouts using C++, using a novel graphics engine technology, refactoring code, setting up a physics engine and lots, lots more.
 
 ## Directory Structure
 
-- `assets` - Includes unpre-processed `.blend` files that were converted to `.glb` files
+- `assets` - Includes unprocessed `.blend` files that are converted to `.glb` files in `content`
 - `content` - Asset files that are ready for direct importing into the game engine
-- `scripts` - A collection of utility scripts that may or may not be used by the build process
+- `scripts` - A collection of utility scripts that are used by the build process
 - `shaders` - Raw GLSL shader files that are to be compiled to SPIR-V and then to header files
 - `source` - All of the source code, including all `.cpp` and `.hpp` files
 - `thirdparty` - All engine dependencies
@@ -15,17 +15,17 @@ This project mostly serves as a massive learning experience for me in terms of 3
 
 - `assimp` - Used for importing 3D model data
 - `eabase` - A base utility library by EA, used by `eastl`
-- `eastl` - A replacement for the C++ STL by EA
+- `eastl` - Used as a replacement for the C++ STL by EA ([EASTL](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2271.html))
 - `glm` - A math library that directly maps to GLSL
-- `jolt` - Used for the physics engine
+- `jolt` - Used for the handling the engine's physics ([Jolt Physics](https://github.com/jrouwe/JoltPhysics))
 - `sdl` - Used for creating a window and rendering graphics using SDL GPU
 - `shadercross` - SDL satellite library for online converting SPIR-V shaders to HLSL and Metal
 
 ## Requirements
 
-- CMake
-- MSVC
-- Python 3
+- CMake 3.5+
+- MSVC 19+ (x64)
+- Python 3.11+
 
 ## Engine Architecture
 
