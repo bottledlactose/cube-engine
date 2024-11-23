@@ -57,7 +57,7 @@ void ContentManager::UnloadShader(const eastl::string &inPath) {
     }
 }
 
-static MeshData AssimpProcessMesh(const aiMesh *mesh, const aiScene *scene) {
+static MeshData AssimpProcessMesh(const aiMesh *mesh) {
     eastl::vector<PositionNormalTextureVertex> vertices;
     eastl::vector<Uint16> indices;
 
@@ -98,9 +98,8 @@ static MeshData AssimpProcessMesh(const aiMesh *mesh, const aiScene *scene) {
 static MeshData AssimpProcessNode(const aiNode *node, const aiScene *scene) {
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        MeshData data = AssimpProcessMesh(mesh, scene);
-
-        return data; // only process the first mesh for now
+        // Only process the first mesh in the model file
+        return AssimpProcessMesh(mesh);
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
@@ -123,11 +122,11 @@ MeshHandle *ContentManager::LoadMesh(const eastl::string &inPath) {
     // TODO: Clean up input parameters (separate unit sizes from counts to ease things up)
     MeshHandle *mesh_handle = RenderService::Get().CreateMesh(
         mesh_data.vertices.data(),
-        sizeof(PositionNormalTextureVertex) * mesh_data.vertices.size(),
-        mesh_data.vertices.size(),
+        static_cast<Uint32>(sizeof(PositionNormalTextureVertex) * mesh_data.vertices.size()),
+        static_cast<Uint32>(mesh_data.vertices.size()),
         mesh_data.indices.data(),
-        sizeof(Uint16) * mesh_data.indices.size(),
-        mesh_data.indices.size()
+        static_cast<Uint32>(sizeof(Uint16) * mesh_data.indices.size()),
+        static_cast<Uint32>(mesh_data.indices.size())
     );
 
     return mesh_handle;
