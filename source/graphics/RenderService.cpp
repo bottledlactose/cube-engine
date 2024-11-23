@@ -217,7 +217,7 @@ bool RenderService::CreatePipeline(const eastl::string &inName, SDL_GPUShader *i
 
     SDL_GPUGraphicsPipeline *pipeline = SDL_CreateGPUGraphicsPipeline(mDevice, &pipeline_create_info);
     if (pipeline == nullptr) {
-        fprintf(stderr, "Unable to create graphics pipeline: %s", SDL_GetError());
+        LOG_ERROR("Unable to create graphics pipeline: %s", SDL_GetError());
         return false;
     }
 
@@ -337,7 +337,7 @@ MeshHandle *RenderService::CreateMesh(
 ) const {
     MeshHandle *mesh = (MeshHandle *)SDL_malloc(sizeof(MeshHandle));
     if (mesh == nullptr) {
-        fprintf(stderr, "Unable to allocate memory for mesh");
+        LOG_ERROR("Unable to allocate memory for mesh");
         return nullptr;
     }
 
@@ -354,7 +354,7 @@ MeshHandle *RenderService::CreateMesh(
 
     mesh->mVertexBuffer = SDL_CreateGPUBuffer(mDevice, &vertex_buffer_create_info);
     if (mesh->mVertexBuffer == nullptr) {
-        fprintf(stderr, "Unable to create vertex buffer: %s", SDL_GetError());
+        LOG_ERROR("Unable to create vertex buffer: %s", SDL_GetError());
         DestroyMesh(mesh);
         return nullptr;
     }
@@ -366,7 +366,7 @@ MeshHandle *RenderService::CreateMesh(
 
     mesh->mIndexBuffer = SDL_CreateGPUBuffer(mDevice, &index_buffer_create_info);
     if (mesh->mIndexBuffer == nullptr) {
-        fprintf(stderr, "Unable to create index buffer: %s", SDL_GetError());
+        LOG_ERROR("Unable to create index buffer: %s", SDL_GetError());
         DestroyMesh(mesh);
         return nullptr;
     }
@@ -378,14 +378,14 @@ MeshHandle *RenderService::CreateMesh(
 
     SDL_GPUTransferBuffer *transfer_buffer = SDL_CreateGPUTransferBuffer(mDevice, &transfer_buffer_create_info);
     if (transfer_buffer == nullptr) {
-        fprintf(stderr, "Unable to create transfer buffer: %s", SDL_GetError());
+        LOG_ERROR("Unable to create transfer buffer: %s", SDL_GetError());
         DestroyMesh(mesh);
         return nullptr;
     }
 
     void *transfer_data = SDL_MapGPUTransferBuffer(mDevice, transfer_buffer, false);
     if (transfer_data == nullptr) {
-        fprintf(stderr, "Unable to map transfer buffer: %s", SDL_GetError());
+        LOG_ERROR("Unable to map transfer buffer: %s", SDL_GetError());
         SDL_ReleaseGPUTransferBuffer(mDevice, transfer_buffer);
         DestroyMesh(mesh);
         return nullptr;
