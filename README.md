@@ -1,5 +1,7 @@
 # Cube Engine
 
+![screenshot](https://raw.githubusercontent.com/bottledlactose/cube-engine/refs/heads/trunk/screenshot.png)
+
 This project mostly serves as a massive learning experience for me in terms of 3D game engine development. I've learned various skills, such as dealing with low-level memory layouts using C++, using a novel graphics engine technology, refactoring code, setting up a physics engine and lots, lots more.
 
 ## Directory Structure
