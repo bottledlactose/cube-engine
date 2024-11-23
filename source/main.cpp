@@ -30,11 +30,10 @@ EASTL_DEFINE_OPERATOR_IMPL(size_t, size_t, const char*, int, unsigned int, const
 #include <EASTL/vector.h>
 
 static Scene scene;
-//static Camera camera(45.0f, 0.0f, -90.0f, 5.0f);
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
-    if (!Context::Get().Initialize({ "boomblox", 1270, 720 })) {
+    if (!Context::Get().Initialize({ "Cube Engine", 1270, 720 })) {
         return SDL_APP_FAILURE;
     }
 
