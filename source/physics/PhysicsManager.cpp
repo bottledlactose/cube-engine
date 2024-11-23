@@ -2,9 +2,6 @@
 
 #include <cstdarg>
 
-// testing
-#include "Context.hpp"
-
 static void TraceImpl(const char *inFMT, ...) {
 	va_list list;
 	va_start(list, inFMT);
@@ -14,6 +11,16 @@ static void TraceImpl(const char *inFMT, ...) {
 
     printf("%s\n", buffer);
 }
+
+#ifdef JPH_ENABLE_ASSERTS
+
+// Callback for asserts, connect this to your own assert handler if you have one
+static bool AssertFailedImpl(const char *inExpression, const char *inMessage, const char *inFile, JPH::uint inLine) {
+    printf("%s:%d: (%s) %s\n", inFile, inLine, inExpression, inMessage != nullptr ? inMessage : "");
+	return true;
+};
+
+#endif // JPH_ENABLE_ASSERTS
 
 bool PhysicsManager::Initialize() {
 
