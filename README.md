@@ -26,6 +26,7 @@ This project mostly serves as a massive learning experience for me in terms of 3
 - CMake 3.5+
 - MSVC 19+ (x64)
 - Python 3.11+
+- Vulkan SDK (for `glslc` used by `build-shaders.py`)
 
 ## Engine Architecture
 
