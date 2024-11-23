@@ -130,51 +130,6 @@ public:
 	}
 };
 
-// An example contact listener
-class MyContactListener : public JPH::ContactListener {
-public:
-	// See: ContactListener
-	virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override {
-		//cout << "Contact validate callback" << endl;
-        printf("Contact validate callback\n");
-
-		// Allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
-		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
-	}
-
-	virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override {
-		//cout << "A contact was added" << endl;
-        printf("A contact was added\n");
-	}
-
-	virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override
-	{
-		//cout << "A contact was persisted" << endl;
-        printf("A contact was persisted\n");
-	}
-
-	virtual void OnContactRemoved(const JPH::SubShapeIDPair &inSubShapePair) override
-	{
-		//cout << "A contact was removed" << endl;
-        printf("A contact was removed\n");
-	}
-};
-
-// An example activation listener
-class MyBodyActivationListener : public JPH::BodyActivationListener{
-public:
-	virtual void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override {
-		//cout << "A body got activated" << endl;
-        printf("A body got activated\n");
-	}
-
-	virtual void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override
-	{
-		//cout << "A body went to sleep" << endl;
-        printf("A body went to sleep\n");
-	}
-};
-
 class PhysicsManager {
 private:
     JPH::PhysicsSystem mPhysicsSystem;
@@ -186,12 +141,11 @@ private:
     ObjectVsBroadPhaseLayerFilterImpl mObjectVsBroadPhaseLayerFilter;
     ObjectLayerPairFilterImpl mObjectLayerPairFilter;
 
-    MyBodyActivationListener mBodyActivationListener;
-    MyContactListener mContactListener;
-
 public:
     bool Initialize();
     void Shutdown();
+
+	void OptimizeBroadPhase();
     
     JPH::BodyID CreateBox(const JPH::Vec3 &inPosition, const JPH::Vec3 &inSize, bool inIsDynamic = false);
 	JPH::BodyID CreateBall(const JPH::Vec3 &inPosition, const float inSize);

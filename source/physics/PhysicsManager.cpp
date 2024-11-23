@@ -36,13 +36,6 @@ bool PhysicsManager::Initialize() {
 
     mPhysicsSystem.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, mBroadPhaseLayerInterface, mObjectVsBroadPhaseLayerFilter, mObjectLayerPairFilter);
 
-    // Set listeneres... just testing for now
-    //mPhysicsSystem.SetBodyActivationListener(&mBodyActivationListener);
-    //mPhysicsSystem.SetContactListener(&mContactListener);
-
-    // TODO: Move this to some function for when a scene is fully loaded
-    //mPhysicsSystem.OptimizeBroadPhase();
-
     return true;
 }
 
@@ -57,6 +50,10 @@ void PhysicsManager::Shutdown() {
 
     delete mJobSystem;
     mJobSystem = nullptr;
+}
+
+void PhysicsManager::OptimizeBroadPhase() {
+    mPhysicsSystem.OptimizeBroadPhase();
 }
 
 JPH::BodyID PhysicsManager::CreateBox(const JPH::Vec3 &inPosition, const JPH::Vec3 &inSize, bool inIsDynamic) {

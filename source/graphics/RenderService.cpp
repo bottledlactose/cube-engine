@@ -2,10 +2,6 @@
 
 #include "macros/log.hpp"
 
-// Testing only
-#include <cstdio>
-#include <cassert>
-
 #include "Context.hpp"
 #include "vertices/PositionNormalTextureVertex.hpp"
 
@@ -13,10 +9,9 @@
 
 #include <SDL_gpu_shadercross.h>
 
-// testing
+// Shader source code
 #include "shaders/basic_triangle.vert.h"
 #include "shaders/basic_triangle.frag.h"
-
 #include "shaders/light_source.vert.h"
 #include "shaders/light_source.frag.h"
 
