@@ -15,21 +15,10 @@
 #include "shaders/light_source.vert.h"
 #include "shaders/light_source.frag.h"
 
-// Testing
-struct ShaderCreateInfo {
-    const eastl::string &mPath;
-    SDL_GPUShaderStage mStage;
-    Uint32 mSamplerCount;
-    Uint32 mUniformBufferCount;
-    Uint32 mStorageBufferCount;
-    Uint32 mStorageTextureCount;
-};
+#include "ShaderCreateInfo.hpp"
+#include "PipelineCreateInfo.hpp"
 
-struct PipelineCreateInfo {
-    eastl::string mName;
-    ShaderCreateInfo mVertexShader;
-    ShaderCreateInfo mFragmentShader;
-};
+#include "RenderState.hpp"
 
 bool RenderService::Initialize(SDL_Window *inWindow) {
     assert(inWindow != nullptr);

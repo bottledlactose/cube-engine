@@ -2,23 +2,13 @@
 
 #include "macros/singleton.hpp"
 
-#include "MeshHandle.hpp"
 #include <SDL3/SDL.h>
-
-// TESTING ONLY for helper function
-#include <glm/glm.hpp>
 
 #include <EASTL/string.h>
 #include <EASTL/unordered_map.h>
 
-struct RenderState {
-    SDL_GPUCommandBuffer *mCommandBuffer;
-    SDL_GPUTexture *mSwapchainTexture;
-    SDL_GPURenderPass *mRenderPass;
-
-    SDL_GPUColorTargetInfo mColorTargetInfo;
-    SDL_GPUDepthStencilTargetInfo mDepthStencilTargetInfo;
-};
+#include "MeshHandle.hpp"
+#include "RenderState.hpp"
 
 class RenderService {
 MAKE_SINGLETON(RenderService)
@@ -26,13 +16,10 @@ private:
     SDL_GPUDevice *mDevice;
     SDL_Window *mWindow;
 
-    // Start Render State
-    SDL_GPUSampleCount mSampleCount;
-
     SDL_GPUTexture *mDepthTexture;
+    SDL_GPUSampleCount mSampleCount;
     SDL_GPUTexture *mMSAATexture;
     SDL_GPUTexture *mResolveTexture;
-    // End Render State
 
     eastl::unordered_map<eastl::string, SDL_GPUGraphicsPipeline *> mPipelines;
 
