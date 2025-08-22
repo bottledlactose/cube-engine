@@ -1,0 +1,3 @@
+# Exclude pre-compiled shaders
+*.h
+*.spv

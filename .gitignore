@@ -1,0 +1,12 @@
+# Exclude Visual Studio Code project directory
+.vscode/
+
+# Exclude CMake build directory
+build/
+
+# Exclude compiled header files
+shaders/*.h
+shaders/*.spv
+
+# Exclude Blender backup files
+*.blend1
